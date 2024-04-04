@@ -1,4 +1,13 @@
- # A fast, lightweight and extensible implementation of a graph data structure.
+fast-graph
+=========
+### A fast, lightweight and extensible implementation of a graph data structure.
+
+[![Crates.io][crates-badge]][crates-url]
+[![docs.rs][docsrs-badge]][docsrs-url]
+![MSRV][msrv-badge]
+[![Discord chat][discord-badge]][discord-url]
+[![build_status][]](https://github.com/henke443/fast-graph/actions)
+
 
  ## Lightweight & fast.
 
@@ -136,6 +145,9 @@
  );
  ```
 
+## [Change log](CHANGELOG.md)
+
+
 [Graph]: https://docs.rs/fast-graph/latest/fast_graph/struct.Graph.html
 [Node]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.Node.html
 [NodeID]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.NodeID.html
@@ -146,3 +158,14 @@
 [Categorized]: https://docs.rs/fast-graph/latest/fast_graph/categories/trait.Categorized.html
 [CategoryGraph]: https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategoryGraph.html
 
+
+[build_status]: https://github.com/henke443/fast-graph/workflows/Continuous%20integration/badge.svg?branch=master
+[API documentation]: https://docs.rs/fast-graph/
+[docsrs-badge]: https://img.shields.io/docsrs/fast-graph
+[docsrs-url]: https://docs.rs/fast-graph/latest/fast_graph
+[crates-badge]: https://img.shields.io/crates/v/fast-graph.svg
+[crates-url]: https://crates.io/crates/fast-graph
+[discord-badge]:  https://img.shields.io/discord/1225406740070404148?logo=discord&style=flat
+[discord-url]: https://discord.gg/n2tc79tJ4e
+[msrv-badge]: https://img.shields.io/badge/rustc-1.64+-blue.svg
+[RELEASES]: RELEASES.rst

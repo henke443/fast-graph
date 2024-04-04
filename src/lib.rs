@@ -138,36 +138,33 @@
 //! );
 //! ```
 
-#[cfg(feature = "serde")]
-extern crate serde;
+
+#[cfg(feature = "specta")]
+pub use specta_derives::*;
 
 use core::fmt;
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::{Ref, RefCell, RefMut},
-    fmt::Formatter,
-    rc::Rc,
-    slice::SliceIndex,
-};
+use std::fmt::Formatter;
 
 pub use slotmap::SlotMap;
 use thiserror::Error;
 
 #[cfg(feature = "categories")]
 pub mod categories;
+
 #[cfg(feature = "categories")]
 pub use categories::*;
 
-pub mod edge;
-pub mod node;
-pub mod slotmap_graph;
-pub mod writer;
+mod edge;
+mod node;
+mod slotmap_graph;
+mod writer;
+mod specta_derives;
 
-pub use edge::*;
-pub use node::*;
+pub use edge::{Edge, EdgeID};
+pub use node::{Node, NodeID};
+pub use slotmap_graph::SlotMapGraph;
 pub use writer::GraphWriter;
 
-pub use slotmap_graph::SlotMapGraph;
 
 #[cfg(test)]
 #[path = "./tests.rs"]
