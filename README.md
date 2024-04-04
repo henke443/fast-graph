@@ -135,6 +135,7 @@
  );
  ```
 
+[Graph]: https://docs.rs/fast-graph/latest/fast_graph/struct.Graph.html
 [Node]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.Node.html
 [NodeID]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.NodeID.html
 [Edge]: https://docs.rs/fast-graph/latest/fast_graph/edge/struct.Edge.html
