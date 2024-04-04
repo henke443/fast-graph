@@ -1,4 +1,17 @@
-Version 1.0.2 (2024-04-03)
+Version 1.1.0 (2024-04-04)
+==========================
+Lots of breaking changes to correct some of my own concerns and also some feedback from other people.
+I will try to avoid breaking changes but there almost certainly be a few more ones. 
+When I think the library is stable I will set the version to 2.0.0.
+
+Breaking changes
+----------------
+- Removed SlotMapGraph
+- Reduced Clone requirement
+- `add_edge` now returns EdgeID.
+- CategoryGraph renamed to CategorizedGraph
+
+Version 1.0.2 (2024-04-04)
 ==========================
 
 - Cleaned some things up mostly and changed documentation.
