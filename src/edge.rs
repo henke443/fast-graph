@@ -38,7 +38,7 @@ impl EdgeID {
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
-pub struct Edge<T: Clone> {
+pub struct Edge<T> {
     pub id: EdgeID,
     pub from: NodeID,
     pub to: NodeID,
@@ -47,8 +47,6 @@ pub struct Edge<T: Clone> {
 
 /// Implements Hash for Edge<T> so only the ID is used for hashing.
 impl<T: std::hash::Hash> std::hash::Hash for Edge<T>
-where
-    T: Clone,
 {
     fn hash<H: std::hash::Hasher>(&self, ra_expand_state: &mut H) {
         self.id.hash(ra_expand_state);
@@ -57,13 +55,13 @@ where
 
 
 /// Implements PartialEq for Edge<T> so only the ID is used for comparison.
-impl<T: Clone> PartialEq for Edge<T> {
+impl<T> PartialEq for Edge<T> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-impl<T: Clone + fmt::Debug> fmt::Debug for Edge<T> {
+impl<T: fmt::Debug> fmt::Debug for Edge<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -73,7 +71,7 @@ impl<T: Clone + fmt::Debug> fmt::Debug for Edge<T> {
     }
 }
 
-impl<T: Clone> Edge<T> {
+impl<T> Edge<T> {
     pub fn new(id: EdgeID, from: NodeID, to: NodeID, data: T) -> Edge<T> {
         Edge { id, from, to, data }
     }

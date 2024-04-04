@@ -4,12 +4,11 @@ extern crate serde;
 use slotmap::KeyData;
 use std::collections::HashMap;
 
-use crate::GraphWriter;
+use crate::GraphInterface;
 use crate::NodeID;
 
 use crate::categories::*;
 use crate::Graph;
-use crate::SlotMapGraph;
 
 #[test]
 fn test_graph_basics() {
@@ -38,8 +37,8 @@ fn test_graph_basics() {
         pub fn new_category_node(&mut self, category: &'static str, nodes: Vec<NodeID>) -> NodeID {
             let category_node = CategoryNode { category, nodes };
             let node = NodeData::CategoryNode(category_node);
-            let node = (self as &mut (dyn SlotMapGraph<NodeData, EdgeData>)).add_node(node);
-            node.id
+            let node = self.add_node(node);
+            node
         }
 
         pub fn all_categories(&self) -> Vec<&CategoryNode> {
@@ -56,14 +55,14 @@ fn test_graph_basics() {
     let edge_data = EdgeData("Henrik");
 
     let mut graph: Graph<NodeData, EdgeData> = Graph::new();
-    let node1 = graph.add_node(NodeData::Int64(123)).clone();
-    assert_eq!(graph.node(node1.id).unwrap().id, node1.id);
+    let node1 = graph.add_node(NodeData::Int64(123));
+    assert_eq!(graph.node(node1).unwrap().id, node1);
 
-    let node2 = graph.add_node(NodeData::String("Hello".into())).clone();
-    assert_eq!(graph.node(node2.id).unwrap().id, node2.id);
-
-    let edge1 = graph.add_edge(node1.id, node2.id, edge_data).clone();
-    assert_eq!(graph.edge(edge1.id).unwrap().id, edge1.id);
+    let node2 = graph.add_node(NodeData::String("Hello".into()));
+    assert_eq!(graph.node(node2).unwrap().id, node2);
+    
+    let edge1 ={ graph.add_edge(node1, node2, edge_data) };
+    assert_eq!(graph.edge(edge1).unwrap().id, edge1);
 
     println!("{:#?}", graph);
 }
@@ -105,7 +104,7 @@ fn test_graph_syntax_sugar() {
 
 #[test]
 pub fn test_graph_categories() {
-    let mut graph: CategoryGraph<NodeData, ()> = CategoryGraph::new();
+    let mut graph: CategorizedGraph<NodeData, ()> = CategorizedGraph::new();
 
     #[derive(Clone, Debug, Default, PartialEq)]
     #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -116,9 +115,9 @@ pub fn test_graph_categories() {
         None,
     }
 
-    let node1 = graph.add_node(NodeData::String("Node 1".into())).id;
-    let node2 = graph.add_node(NodeData::String("Node 2".into())).id;
-    let node3 = graph.add_node(NodeData::String("Node 3".into())).id;
+    let node1 = graph.add_node(NodeData::String("Node 1".into()));
+    let node2 = graph.add_node(NodeData::String("Node 2".into()));
+    let node3 = graph.add_node(NodeData::String("Node 3".into()));
 
     let category1 = graph
         .create_category(
@@ -132,13 +131,13 @@ pub fn test_graph_categories() {
     println!("Categories: {:#?}", graph.categories);
 
     assert_eq!(graph.categories.len(), 2);
-    assert_eq!(graph.nodes().len()-1, 5); // Slotmap has one extra empty slot in the start.
+    assert_eq!(graph.nodes.len()-1, 5); // Slotmap has one extra empty slot in the start.
 
     assert_eq!(graph.category("Category 1").unwrap().connections.len(), 2);
-    assert_eq!(graph.category("Category 2").clone().unwrap().connections.len(), 1);
+    assert_eq!(graph.category("Category 2").unwrap().connections.len(), 1);
 
-    assert_eq!(graph.edges().len(), 3);
-    assert_eq!(graph.nodes().len()-1, 5); // Slotmap has one extra empty slot in the start.
+    assert_eq!(graph.edges.len(), 3);
+    assert_eq!(graph.nodes.len()-1, 5); // Slotmap has one extra empty slot in the start.
     assert_eq!(graph.category_by_id(category1).unwrap().data, NodeData::CategoryName("Category 1".into()));
 
     println!("{:#?}", graph);

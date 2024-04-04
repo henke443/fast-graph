@@ -5,7 +5,7 @@
 //! ## Lightweight & fast.
 //!
 //! By default, [SlotMaps](`slotmap`) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
-//! [HashBrown](hashbrown) is used instead of [`std::HashMap`] to map category names to ids in the [`CategoryGraph`] struct.
+//! [HashBrown](hashbrown) is used instead of [`std::HashMap`] to map category names to ids in the [`CategorizedGraph`] struct.
 //!
 //! [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
 //! 
@@ -21,7 +21,7 @@
 //!
 //! ## Categories
 //!
-//! The [CategoryGraph] struct uses a hash map to map category names ([String]) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
+//! The [CategorizedGraph] struct uses a hash map to map category names ([String]) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
 //! There's also some useful extra functions to query categories and their nodes, and a [Categorized] trait that can be implemented for a custom struct if needed.
 //!
 //! In other words a simple extension to the graph that allows for efficient and easy grouping of nodes by strings.
@@ -31,16 +31,14 @@
 //!
 //! [Edge] - Struct representing an edge in the graph. Contains an [EdgeID] which is a key to the edge in the slotmap, and two [NodeID]s which are the nodes the edge connects (from & to). An edge can also have "data", which could be anything or nothing; for example the weight of the connection or a struct or enum representing something else.
 //!
-//! [GraphWriter] - Trait defining methods to alter a graph, i.e. adding, removing, and editing nodes and edges.
+//! [GraphInterface] - Trait defining methods to alter a graph, i.e. adding, removing, and editing nodes and edges.
 //!
-//! [SlotMapGraph] - Trait defining methods to access the nodes and edges of a graph where the nodes and edges are stored in slotmaps. 
-//! Implements [GraphWriter].
 //!
-//! [Graph] - The default graph struct which implements [SlotMapGraph]. It only contains two slotmaps, one for nodes and one for edges.
+//! [Graph] - The default graph struct which implements [GraphInterface]. It only contains two slotmaps, one for nodes and one for edges.
 //!
-//! [Categorized] - Trait that extends [SlotMapGraph] with category specific methods.
+//! [Categorized] - Trait that extends the [Graph] with category specific methods.
 //!
-//! [CategoryGraph] - A graph with categories. Categories are normal nodes (which can contain edges & data), but the graph also contains a hashmap that maps category names to category nodes for easy access.
+//! [CategorizedGraph] - A graph with categories. Categories are normal nodes (which can contain edges & data), but the graph also contains a hashmap that maps category names to category nodes for easy access.
 //!
 //!
 //! # Examples
@@ -49,35 +47,36 @@
 //!
 //! ```
 //! use fast_graph::{Graph, Node, Edge};
-//! /* We need to have these traits in scope: */
-//! use fast_graph::{SlotMapGraph, GraphWriter};
+//! /* We need to have this trait in scope: */
+//! use fast_graph::{GraphInterface};
 //!
-//! #[derive(Clone, Debug)]
+//! #[derive(Debug, Clone)]
 //! struct EdgeData(String);
-//! #[derive(Clone, Debug)]
+//! 
+//! #[derive(Debug, Clone)]
 //! struct NodeData(String);
 //!
 //! let mut graph: Graph<NodeData, EdgeData> = Graph::new();
 //!
-//! let node1 = graph.add_node(NodeData("Node 1".into())).clone();
-//! let node2 = graph.add_node(NodeData("Node 2".into())).clone();
-//! let edge1 = graph.add_edge(node1.id, node2.id, EdgeData("Edge 1".into())).clone();
+//! let node1 = graph.add_node(NodeData("Node 1".into()));
+//! let node2 = graph.add_node(NodeData("Node 2".into()));
+//! let edge1 = graph.add_edge(node1, node2, EdgeData("Edge 1".into()));
 //!
-//! assert_eq!(graph.node(node1.id).unwrap().id, node1.id);
-//! assert_eq!(graph.edge(edge1.id).unwrap().id, edge1.id);
+//! assert_eq!(graph.node(node1).unwrap().id, node1);
+//! assert_eq!(graph.edge(edge1).unwrap().id, edge1);
 //!
-//! graph.remove_node(node1.id).unwrap();
+//! graph.remove_node(node1).unwrap();
 //!
 //! // Since we just removed node 1, it should be None now.
-//! assert_eq!(graph.node(node1.id), None);
+//! assert!(graph.node(node1).is_err());
 //! // And node 2 still points to node 2.
-//! assert_eq!(graph.node(node2.id).unwrap().id, node2.id);
+//! assert_eq!(graph.node(node2).unwrap().id, node2);
 //!
 //! println!("{:#?}", graph);
 //!
 //! ```
 //!
-//! ## [CategoryGraph] example
+//! ## [CategorizedGraph] example
 //! ```
 //! use fast_graph::*;
 //!
@@ -90,11 +89,11 @@
 //!     None,
 //! }
 //!
-//! let mut graph: CategoryGraph<NodeData, ()> = CategoryGraph::new();
+//! let mut graph: CategorizedGraph<NodeData, ()> = CategorizedGraph::new();
 //!
-//! let node1 = graph.add_node(NodeData::Number(1)).id;
-//! let node2 = graph.add_node(NodeData::Number(2)).id;
-//! let node3 = graph.add_node(NodeData::Number(3)).id;
+//! let node1 = graph.add_node(NodeData::Number(1));
+//! let node2 = graph.add_node(NodeData::Number(2));
+//! let node3 = graph.add_node(NodeData::Number(3));
 //!
 //! let category1 = graph.create_category("Category 1", vec![node1, node2],
 //!     NodeData::CategoryData("Category 1".into())
@@ -156,14 +155,12 @@ pub use categories::*;
 
 mod edge;
 mod node;
-mod slotmap_graph;
-mod writer;
+mod interface;
 mod specta_derives;
 
 pub use edge::{Edge, EdgeID};
 pub use node::{Node, NodeID};
-pub use slotmap_graph::SlotMapGraph;
-pub use writer::GraphWriter;
+pub use interface::GraphInterface;
 
 
 #[cfg(test)]
@@ -175,14 +172,14 @@ mod tests;
 /* -------------------------------------------------------------------------- */
 
 /* ---------------------------------- Graph --------------------------------- */
-/// The default Graph struct which implements the [SlotMapGraph] trait.
+/// The default Graph struct which implements the [GraphInterface] trait.
 ///
 ///
 /// # Examples
 /// ```
 /// use fast_graph::{Graph, Node, Edge};
-/// /* We need to have these traits in scope: */
-/// use fast_graph::{SlotMapGraph, GraphWriter};
+/// /* We need to have this trait in scope: */
+/// use fast_graph::{GraphInterface};
 ///
 /// #[derive(Clone, Debug)]
 /// struct EdgeData(String);
@@ -191,43 +188,104 @@ mod tests;
 ///
 /// let mut graph: Graph<NodeData, EdgeData> = Graph::new();
 ///
-/// let node1 = graph.add_node(NodeData("Node 1".into())).clone();
-/// let node2 = graph.add_node(NodeData("Node 2".into())).clone();
-/// let edge1 = graph.add_edge(node1.id, node2.id, EdgeData("Edge 1".into())).clone();
+/// let node1 = graph.add_node(NodeData("Node 1".into()));
+/// let node2 = graph.add_node(NodeData("Node 2".into()));
+/// let edge1 = graph.add_edge(node1, node2, EdgeData("Edge 1".into()));
 ///
-/// assert_eq!(graph.node(node1.id).unwrap().id, node1.id);
-/// assert_eq!(graph.edge(edge1.id).unwrap().id, edge1.id);
+/// assert_eq!(graph.node(node1).unwrap().id, node1);
+/// assert_eq!(graph.edge(edge1).unwrap().id, edge1);
 ///
-/// graph.remove_node(node1.id).unwrap();
+/// graph.remove_node(node1).unwrap();
 ///
-/// assert_eq!(graph.node(node1.id), None);
-/// assert_eq!(graph.node(node2.id).unwrap().id, node2.id);
+/// assert!(graph.node(node1).is_err());
+/// assert_eq!(graph.node(node2).unwrap().id, node2);
 ///
 /// println!("{:#?}", graph);
 ///
 /// ```
-#[derive(Clone)]
-pub struct Graph<N: Clone, E: Clone> {
+pub struct Graph<N, E> {
     pub nodes: SlotMap<NodeID, Node<N>>,
     pub edges: SlotMap<EdgeID, Edge<E>>,
 }
 
-impl<N: Clone, E: Clone> SlotMapGraph<N, E> for Graph<N, E> {
-    fn nodes(&self) -> &SlotMap<NodeID, Node<N>> {
-        &self.nodes
+impl<N, E> GraphInterface<N, E> for Graph<N, E> {
+    
+    fn node(&self, id: NodeID) -> Result<&Node<N>, GraphError> {
+        self.nodes.get(id).ok_or(GraphError::NodeNotFound)
+    }
+    
+    fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<N>, GraphError> {
+        self.nodes.get_mut(id).ok_or(GraphError::NodeNotFound)
+    }
+    
+    fn edge(&self, id: EdgeID) -> Result<&Edge<E>, GraphError> {
+        self.edges.get(id).ok_or(GraphError::EdgeNotFound)
+    }
+    
+    fn edge_mut(&mut self, id: EdgeID) -> Result<&mut Edge<E>, GraphError> {
+        self.edges.get_mut(id).ok_or(GraphError::EdgeNotFound)
     }
 
-    fn nodes_mut(&mut self) -> &mut SlotMap<NodeID, Node<N>> {
-        &mut self.nodes
+    fn remove_node(&mut self, id: NodeID) -> Result<(), GraphError> {
+        let node = self
+            .nodes
+            .remove(id)
+            .map_or(Err(GraphError::NodeNotFound), |n| Ok(n))?;
+        for edge_id in node.connections.iter() {
+            self.edges
+                .remove(*edge_id)
+                .map_or(Err(GraphError::EdgeNotFound), |_| Ok(()))?;
+        }
+        Ok(())
     }
 
-    fn edges(&self) -> &SlotMap<EdgeID, Edge<E>> {
-        &self.edges
+    fn remove_edge(&mut self, id: EdgeID) -> Result<(), GraphError> {
+        self.edges
+            .remove(id)
+            .map_or(Err(GraphError::EdgeNotFound), |_| Ok(()))?;
+        Ok(())
     }
 
-    fn edges_mut(&mut self) -> &mut SlotMap<EdgeID, Edge<E>> {
-        &mut self.edges
+    fn add_node(&mut self, data: N) -> NodeID {
+        let id = self.nodes.insert_with_key(|id| Node::new(id, data));
+        id
     }
+
+    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID> where N: Clone {
+        let mut nodes = Vec::new();
+        for data in data {
+            let node = self.add_node(data.clone());
+            nodes.push(node);
+        }
+        nodes
+    }
+
+    fn add_edges(&mut self, data: &[(NodeID, NodeID)]) -> Vec<EdgeID>
+    where
+        E: Default + Clone,
+        N: Clone
+    {
+        let with_data: Vec<(NodeID, NodeID, E)> = data
+            .iter()
+            .map(|(from, to)| (*from, *to, E::default()))
+            .collect();
+
+        self.add_edges_with_data(&with_data)
+    }
+
+    fn add_edge(&mut self, from: NodeID, to: NodeID, data: E) -> EdgeID {
+        let id = self
+            .edges
+            .insert_with_key(|id| Edge::new(id, from, to, data));
+        if let Some(node) = self.nodes.get_mut(from) {
+            node.add_connection(id);
+        }
+        if let Some(node) = self.nodes.get_mut(to) {
+            node.add_connection(id);
+        }
+        id
+    }
+   
 }
 
 impl<N: fmt::Debug + Clone, E: fmt::Debug + Clone> fmt::Debug for Graph<N, E> {
@@ -241,9 +299,6 @@ impl<N: fmt::Debug + Clone, E: fmt::Debug + Clone> fmt::Debug for Graph<N, E> {
 }
 
 impl<N, E> Graph<N, E>
-where
-    N: Clone,
-    E: Clone,
 {
     pub fn new() -> Graph<N, E> {
         Graph {
