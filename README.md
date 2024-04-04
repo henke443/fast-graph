@@ -156,7 +156,7 @@ fast-graph
 [CategorizedGraph]: https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategorizedGraph.html
 
 
-[build_status]: https://github.com/henke443/fast-graph/workflows/Continuous%20integration/badge.svg?branch=master
+[build_status]: https://github.com/henke443/fast-graph/workflows/Rust%20CI/badge.svg?branch=master
 [API documentation]: https://docs.rs/fast-graph/
 [docsrs-badge]: https://img.shields.io/docsrs/fast-graph
 [docsrs-url]: https://docs.rs/fast-graph/latest/fast_graph
