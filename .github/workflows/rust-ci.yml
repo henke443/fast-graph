@@ -15,30 +15,32 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        rust: [stable, nightly]
+        rust: [1.64.0, stable]
+        features: []
 
     steps:
-    - uses: hecrj/setup-rust-action@v2
-      with:
-        rust-version: ${{ matrix.rust }}
-    - uses: actions/checkout@master
-    - name: Run tests
+      - uses: hecrj/setup-rust-action@v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - uses: actions/checkout@master
+      - name: Run tests
       run: cargo test --verbose
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        rust: [stable, nightly]
+        os: [ubuntu-latest, windows-latest]
+        rust: [1.64.0, stable]
     steps:
+      - name: Tests
       - uses: hecrj/setup-rust-action@v2
         with:
           rust-version: ${{ matrix.rust }}
+      - uses: actions/checkout@master
       - name: Build
         run: |
           cargo build --verbose --no-default-features
           cargo build --verbose --features "${{ matrix.features }}"
-      - name: Tests
         run: |
           cargo test --verbose --no-default-features
           cargo test ${{ matrix.test_all }} --verbose --features "${{ matrix.features }}"
