@@ -25,7 +25,6 @@ impl NodeID {
     }
 }
 
-
 /* -------------------------------------------------------------------------- */
 /*                                    Node                                    */
 /* -------------------------------------------------------------------------- */
@@ -55,13 +54,11 @@ impl<T> PartialEq for Node<T> {
 }
 
 /// Implements Hash for Node<T> so only the ID is used for hashing.
-impl<T: std::hash::Hash> std::hash::Hash for Node<T>
-{
+impl<T: std::hash::Hash> std::hash::Hash for Node<T> {
     fn hash<H: std::hash::Hasher>(&self, ra_expand_state: &mut H) {
         self.id.hash(ra_expand_state);
     }
 }
-
 
 /* ---------------------------------- Debug --------------------------------- */
 

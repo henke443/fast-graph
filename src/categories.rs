@@ -73,7 +73,10 @@ impl<N, E> GraphInterface<N, E> for CategorizedGraph<N, E> {
         id
     }
 
-    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID> where N: Clone {
+    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID>
+    where
+        N: Clone,
+    {
         let mut nodes = Vec::new();
         for data in data {
             let node = self.add_node(data.clone());
@@ -85,7 +88,7 @@ impl<N, E> GraphInterface<N, E> for CategorizedGraph<N, E> {
     fn add_edges(&mut self, data: &[(NodeID, NodeID)]) -> Vec<EdgeID>
     where
         E: Default + Clone,
-        N: Clone
+        N: Clone,
     {
         let with_data: Vec<(NodeID, NodeID, E)> = data
             .iter()
@@ -107,19 +110,19 @@ impl<N, E> GraphInterface<N, E> for CategorizedGraph<N, E> {
         }
         id
     }
-    
+
     fn node(&self, id: NodeID) -> Result<&Node<N>, GraphError> {
         self.nodes.get(id).ok_or(GraphError::NodeNotFound)
     }
-    
+
     fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<N>, GraphError> {
         self.nodes.get_mut(id).ok_or(GraphError::NodeNotFound)
     }
-    
+
     fn edge(&self, id: EdgeID) -> Result<&Edge<E>, GraphError> {
         self.edges.get(id).ok_or(GraphError::EdgeNotFound)
     }
-    
+
     fn edge_mut(&mut self, id: EdgeID) -> Result<&mut Edge<E>, GraphError> {
         self.edges.get_mut(id).ok_or(GraphError::EdgeNotFound)
     }
@@ -145,8 +148,7 @@ pub enum CategorizedGraphError {
 }
 
 /// Methods for a graph with categories.
-pub trait Categorized<N, E, C>: GraphInterface<N, E>
-{
+pub trait Categorized<N, E, C>: GraphInterface<N, E> {
     /// Returns the category ID by name. In the standard implementation this is a hashmap lookup.
     fn category_id_by_name(&self, category_name: &str) -> Option<&NodeID>;
 
@@ -163,7 +165,7 @@ pub trait Categorized<N, E, C>: GraphInterface<N, E>
     ) -> Result<(), CategorizedGraphError>
     where
         E: Default + Clone,
-        N: Clone
+        N: Clone,
     {
         let category_node = self.node(category_id).map_or(
             Err(CategorizedGraphError::CategoryNotFound(format!(
@@ -193,8 +195,8 @@ pub trait Categorized<N, E, C>: GraphInterface<N, E>
     fn add_to_category(&mut self, category_name: &str, nodes: Vec<NodeID>) -> NodeID
     where
         E: Default + Clone,
-        N: Clone + Default
-         {
+        N: Clone + Default,
+    {
         let existing: Option<&NodeID> = self.category_id_by_name(category_name);
         let category_node: NodeID;
 
@@ -220,7 +222,10 @@ pub trait Categorized<N, E, C>: GraphInterface<N, E>
         category: &str,
         nodes: Vec<NodeID>,
         data: C,
-    ) -> Result<NodeID, String> where E: Default + Clone, N: Clone + Default;
+    ) -> Result<NodeID, String>
+    where
+        E: Default + Clone,
+        N: Clone + Default;
 
     /// Returns a list of all categories.
     fn all_categories(&self) -> Vec<(&String, NodeID)>;
@@ -279,7 +284,11 @@ where
         category: &str,
         nodes: Vec<NodeID>,
         data: N,
-    ) -> Result<NodeID, String> where E: Default + Clone, N: Clone + Default {
+    ) -> Result<NodeID, String>
+    where
+        E: Default + Clone,
+        N: Clone + Default,
+    {
         let existing_category: Option<&NodeID> = self.categories.get(category);
         if existing_category.is_some() {
             return Err(format!("Category {} already exists", category));

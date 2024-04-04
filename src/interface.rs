@@ -7,12 +7,14 @@ use crate::{Edge, EdgeID, GraphError, Node, NodeID};
 pub trait GraphInterface<N, E> {
     fn node(&self, id: NodeID) -> Result<&Node<N>, GraphError>;
     fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<N>, GraphError>;
-    
+
     fn edge(&self, id: EdgeID) -> Result<&Edge<E>, GraphError>;
     fn edge_mut(&mut self, id: EdgeID) -> Result<&mut Edge<E>, GraphError>;
 
     fn add_node(&mut self, data: N) -> NodeID;
-    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID> where N: Clone;
+    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID>
+    where
+        N: Clone;
 
     fn add_edge(&mut self, from: NodeID, to: NodeID, data: E) -> EdgeID;
 
@@ -31,19 +33,22 @@ pub trait GraphInterface<N, E> {
         Ok(())
     }
 
-    fn add_edges_with_data(&mut self, data: &[(NodeID, NodeID, E)]) -> Vec<EdgeID> where E: Clone {
+    fn add_edges_with_data(&mut self, data: &[(NodeID, NodeID, E)]) -> Vec<EdgeID>
+    where
+        E: Clone,
+    {
         let mut edges = Vec::new();
         for (from, to, data) in data {
-            let edge= self.add_edge(*from, *to, data.clone());
+            let edge = self.add_edge(*from, *to, data.clone());
             edges.push(edge);
         }
         edges
     }
 
-    fn add_nodes_and_edges(&mut self, data: Vec<(N, Vec<NodeID>)>) -> (Vec<NodeID>, Vec<EdgeID>) 
+    fn add_nodes_and_edges(&mut self, data: Vec<(N, Vec<NodeID>)>) -> (Vec<NodeID>, Vec<EdgeID>)
     where
         E: Default + Clone,
-        N: Default + Clone
+        N: Default + Clone,
     {
         let with_data: Vec<(N, Vec<(NodeID, E)>)> = data
             .iter()
@@ -60,7 +65,11 @@ pub trait GraphInterface<N, E> {
     fn add_nodes_and_edges_with_data(
         &mut self,
         node_data: Vec<(N, Vec<(NodeID, E)>)>,
-    ) -> (Vec<NodeID>, Vec<EdgeID>) where N: Default + Clone, E: Clone {
+    ) -> (Vec<NodeID>, Vec<EdgeID>)
+    where
+        N: Default + Clone,
+        E: Clone,
+    {
         let mut added_nodes = Vec::new();
         let mut added_edges: Vec<EdgeID> = Vec::new();
         for (data, connections) in node_data {

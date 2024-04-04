@@ -60,8 +60,8 @@ fn test_graph_basics() {
 
     let node2 = graph.add_node(NodeData::String("Hello".into()));
     assert_eq!(graph.node(node2).unwrap().id, node2);
-    
-    let edge1 ={ graph.add_edge(node1, node2, edge_data) };
+
+    let edge1 = { graph.add_edge(node1, node2, edge_data) };
     assert_eq!(graph.edge(edge1).unwrap().id, edge1);
 
     println!("{:#?}", graph);
@@ -131,14 +131,17 @@ pub fn test_graph_categories() {
     println!("Categories: {:#?}", graph.categories);
 
     assert_eq!(graph.categories.len(), 2);
-    assert_eq!(graph.nodes.len()-1, 5); // Slotmap has one extra empty slot in the start.
+    assert_eq!(graph.nodes.len() - 1, 5); // Slotmap has one extra empty slot in the start.
 
     assert_eq!(graph.category("Category 1").unwrap().connections.len(), 2);
     assert_eq!(graph.category("Category 2").unwrap().connections.len(), 1);
 
     assert_eq!(graph.edges.len(), 3);
-    assert_eq!(graph.nodes.len()-1, 5); // Slotmap has one extra empty slot in the start.
-    assert_eq!(graph.category_by_id(category1).unwrap().data, NodeData::CategoryName("Category 1".into()));
+    assert_eq!(graph.nodes.len() - 1, 5); // Slotmap has one extra empty slot in the start.
+    assert_eq!(
+        graph.category_by_id(category1).unwrap().data,
+        NodeData::CategoryName("Category 1".into())
+    );
 
     println!("{:#?}", graph);
 }

@@ -8,7 +8,7 @@
 //! [HashBrown](hashbrown) is used instead of [`std::HashMap`] to map category names to ids in the [`CategorizedGraph`] struct.
 //!
 //! [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
-//! 
+//!
 //! ## Extensible & Generic
 //!
 //! The [Graph] is generic over the node and edge data types, which can be any type that implements [Clone]. There's also traits for making even more customized graph-like data structures if the need arises.
@@ -52,7 +52,7 @@
 //!
 //! #[derive(Debug, Clone)]
 //! struct EdgeData(String);
-//! 
+//!
 //! #[derive(Debug, Clone)]
 //! struct NodeData(String);
 //!
@@ -98,24 +98,24 @@
 //! let category1 = graph.create_category("Category 1", vec![node1, node2],
 //!     NodeData::CategoryData("Category 1".into())
 //! ).unwrap();
-//! 
+//!
 //! assert_eq!(graph.category("Category 1").unwrap().connections.len(), 2);
-//! 
+//!
 //! // The category node should have the same data as the one we passed in.
 //! let category1_data = graph.category("Category 1").unwrap().data.clone();
 //! if let NodeData::CategoryData(category1_name) = category1_data {
 //!    assert_eq!(category1_name, "Category 1".to_string());
 //! }
-//! 
-//! // Adding to a category that doesn't exist will create it. 
+//!
+//! // Adding to a category that doesn't exist will create it.
 //! let category2 = graph.add_to_category("Category 2", vec![node2]);
 //! assert_eq!(graph.all_categories().len(), 2);
-//! 
+//!
 //! // Adding to the same category twice will return the same category node.
 //! let category2_1 = graph.add_to_category("Category 2", vec![node3]);
 //! assert_eq!(graph.all_categories().len(), 2);
 //! assert_eq!(category2, category2_1);
-//! 
+//!
 //! // The "Category 2" node should have two connections, one to node2 and one to node3.
 //! let category2_node = graph.category("Category 2").unwrap();
 //! assert_eq!(
@@ -137,7 +137,6 @@
 //! );
 //! ```
 
-
 #[cfg(feature = "specta")]
 pub use specta_derives::*;
 
@@ -154,14 +153,13 @@ pub mod categories;
 pub use categories::*;
 
 mod edge;
-mod node;
 mod interface;
+mod node;
 mod specta_derives;
 
 pub use edge::{Edge, EdgeID};
-pub use node::{Node, NodeID};
 pub use interface::GraphInterface;
-
+pub use node::{Node, NodeID};
 
 #[cfg(test)]
 #[path = "./tests.rs"]
@@ -209,19 +207,18 @@ pub struct Graph<N, E> {
 }
 
 impl<N, E> GraphInterface<N, E> for Graph<N, E> {
-    
     fn node(&self, id: NodeID) -> Result<&Node<N>, GraphError> {
         self.nodes.get(id).ok_or(GraphError::NodeNotFound)
     }
-    
+
     fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<N>, GraphError> {
         self.nodes.get_mut(id).ok_or(GraphError::NodeNotFound)
     }
-    
+
     fn edge(&self, id: EdgeID) -> Result<&Edge<E>, GraphError> {
         self.edges.get(id).ok_or(GraphError::EdgeNotFound)
     }
-    
+
     fn edge_mut(&mut self, id: EdgeID) -> Result<&mut Edge<E>, GraphError> {
         self.edges.get_mut(id).ok_or(GraphError::EdgeNotFound)
     }
@@ -251,7 +248,10 @@ impl<N, E> GraphInterface<N, E> for Graph<N, E> {
         id
     }
 
-    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID> where N: Clone {
+    fn add_nodes(&mut self, data: &[N]) -> Vec<NodeID>
+    where
+        N: Clone,
+    {
         let mut nodes = Vec::new();
         for data in data {
             let node = self.add_node(data.clone());
@@ -263,7 +263,7 @@ impl<N, E> GraphInterface<N, E> for Graph<N, E> {
     fn add_edges(&mut self, data: &[(NodeID, NodeID)]) -> Vec<EdgeID>
     where
         E: Default + Clone,
-        N: Clone
+        N: Clone,
     {
         let with_data: Vec<(NodeID, NodeID, E)> = data
             .iter()
@@ -285,7 +285,6 @@ impl<N, E> GraphInterface<N, E> for Graph<N, E> {
         }
         id
     }
-   
 }
 
 impl<N: fmt::Debug + Clone, E: fmt::Debug + Clone> fmt::Debug for Graph<N, E> {
@@ -298,8 +297,7 @@ impl<N: fmt::Debug + Clone, E: fmt::Debug + Clone> fmt::Debug for Graph<N, E> {
     }
 }
 
-impl<N, E> Graph<N, E>
-{
+impl<N, E> Graph<N, E> {
     pub fn new() -> Graph<N, E> {
         Graph {
             nodes: SlotMap::with_key(),

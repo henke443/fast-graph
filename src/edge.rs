@@ -46,13 +46,11 @@ pub struct Edge<T> {
 }
 
 /// Implements Hash for Edge<T> so only the ID is used for hashing.
-impl<T: std::hash::Hash> std::hash::Hash for Edge<T>
-{
+impl<T: std::hash::Hash> std::hash::Hash for Edge<T> {
     fn hash<H: std::hash::Hasher>(&self, ra_expand_state: &mut H) {
         self.id.hash(ra_expand_state);
     }
 }
-
 
 /// Implements PartialEq for Edge<T> so only the ID is used for comparison.
 impl<T> PartialEq for Edge<T> {
@@ -76,4 +74,3 @@ impl<T> Edge<T> {
         Edge { id, from, to, data }
     }
 }
-
