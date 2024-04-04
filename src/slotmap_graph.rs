@@ -6,7 +6,7 @@ use slotmap::SlotMap;
 
 use crate::{Edge, EdgeID, GraphError, Node, NodeID};
 
-pub use crate::GraphWriter;
+use crate::GraphWriter;
 
 /// Provides the most basic functionality of a graph (getting mutable and immutable references to nodes and edges) using the [slotmap] crate.
 /// The [GraphWriter] trait is implemented for any type that implements [SlotMapGraph].
