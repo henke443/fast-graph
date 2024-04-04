@@ -2,14 +2,14 @@
 
  ## Lightweight & fast.
 
- By default, [SlotMaps](`slotmap`) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
- [HashBrown](hashbrown) is used instead of [`std::HashMap`] to map category names to ids in the [`CategoryGraph`] struct.
+ By default, [SlotMaps](https://docs.rs/slotmap/latest/slotmap/index.html) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
+ [HashBrown](https://docs.rs/hashbrown/latest/hashbrown/index.html) is used instead of [`std::HashMap`] to map category names to ids in the [`CategoryGraph`](https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategoryGraph.html) struct.
 
  [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
  
  ## Extensible & Generic
 
- The [Graph] is generic over the node and edge data types, which can be any type that implements [Clone]. There's also traits for making even more customized graph-like data structures if the need arises.
+ The [Graph] is generic over the node and edge data types, which can be any type that implements [Clone](https://doc.rust-lang.org/std/clone/trait.Clone.html). There's also traits for making even more customized graph-like data structures if the need arises.
 
  [`std::HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 
@@ -19,7 +19,7 @@
 
  ## Categories
 
- The [CategoryGraph] struct uses a hash map to map category names ([String]) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
+ The [CategoryGraph] struct uses a hash map to map category names ([String](https://doc.rust-lang.org/std/string/index.html)) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
  There's also some useful extra functions to query categories and their nodes, and a [Categorized] trait that can be implemented for a custom struct if needed.
 
  In other words a simple extension to the graph that allows for efficient and easy grouping of nodes by strings.
@@ -39,7 +39,6 @@
  [Categorized] - Trait that extends [SlotMapGraph] with category specific methods.
 
  [CategoryGraph] - A graph with categories. Categories are normal nodes (which can contain edges & data), but the graph also contains a hashmap that maps category names to category nodes for easy access.
-
 
  # Examples
 
@@ -135,3 +134,13 @@
      ).is_err()
  );
  ```
+
+[Node]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.Node.html
+[NodeID]: https://docs.rs/fast-graph/latest/fast_graph/node/struct.NodeID.html
+[Edge]: https://docs.rs/fast-graph/latest/fast_graph/edge/struct.Edge.html
+[EdgeID]: https://docs.rs/fast-graph/latest/fast_graph/edge/struct.EdgeID.html
+[GraphWriter]: https://docs.rs/fast-graph/latest/fast_graph/writer/trait.GraphWriter.html
+[SlotMapGraph]: https://docs.rs/fast-graph/latest/fast_graph/slotmap_graph/trait.SlotMapGraph.html
+[Categorized]: https://docs.rs/fast-graph/latest/fast_graph/categories/trait.Categorized.html
+[CategoryGraph]: https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategoryGraph.html
+
