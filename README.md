@@ -4,9 +4,9 @@ fast-graph
 
 [![Crates.io][crates-badge]][crates-url]
 [![docs.rs][docsrs-badge]][docsrs-url]
-![MSRV][msrv-badge]
 [![Discord chat][discord-badge]][discord-url]
-[![build_status][]](https://github.com/henke443/fast-graph/actions)
+[![Rust CI](https://github.com/henke443/fast-graph/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/henke443/fast-graph/actions/workflows/rust-ci.yml)
+![MSRV][msrv-badge]
 
 
  ## Lightweight & fast.
@@ -156,7 +156,6 @@ fast-graph
 [CategorizedGraph]: https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategorizedGraph.html
 
 
-[build_status]: https://github.com/henke443/fast-graph/workflows/Rust%20CI/badge.svg?branch=master
 [API documentation]: https://docs.rs/fast-graph/
 [docsrs-badge]: https://img.shields.io/docsrs/fast-graph
 [docsrs-url]: https://docs.rs/fast-graph/latest/fast_graph
