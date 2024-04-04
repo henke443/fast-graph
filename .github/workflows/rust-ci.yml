@@ -1,0 +1,52 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        override: true
+    - name: Build
+      run: |
+        cargo build --verbose --no-default-features
+        cargo build --verbose --features "${{ matrix.features }}"
+    - name: Tests
+      run: |
+        cargo test --verbose --no-default-features
+        cargo test ${{ matrix.test_all }} --verbose --features "${{ matrix.features }}"
+    # - name: Build benchmarks
+    #   if: ${{ matrix.bench }}
+    #   run: |
+    #     cargo bench --verbose --no-run --all-features
+  
+  rustfmt:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        include:
+          - rust: stable
+            rustfmt: rustfmt
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          components: ${{ matrix.rustfmt }}
+          override: true
+      - name: Rustfmt
+        if: matrix.rustfmt
+        run: cargo fmt -- --check
