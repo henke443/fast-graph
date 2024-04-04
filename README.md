@@ -51,6 +51,7 @@
 
  #[derive(Clone, Debug)]
  struct EdgeData(String);
+ 
  #[derive(Clone, Debug)]
  struct NodeData(String);
 
