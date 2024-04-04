@@ -10,26 +10,42 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        rust: [stable, nightly]
+
     steps:
-    - uses: actions-rs/toolchain@v1
+    - uses: hecrj/setup-rust-action@v2
       with:
-        profile: minimal
-        toolchain: ${{ matrix.rust }}
-        override: true
-    - name: Build
-      run: |
-        cargo build --verbose --no-default-features
-        cargo build --verbose --features "${{ matrix.features }}"
-    - name: Tests
-      run: |
-        cargo test --verbose --no-default-features
-        cargo test ${{ matrix.test_all }} --verbose --features "${{ matrix.features }}"
-    # - name: Build benchmarks
-    #   if: ${{ matrix.bench }}
-    #   run: |
-    #     cargo bench --verbose --no-run --all-features
+        rust-version: ${{ matrix.rust }}
+    - uses: actions/checkout@master
+    - name: Run tests
+      run: cargo test --verbose
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        rust: [stable, nightly]
+    steps:
+      - uses: hecrj/setup-rust-action@v2
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Build
+        run: |
+          cargo build --verbose --no-default-features
+          cargo build --verbose --features "${{ matrix.features }}"
+      - name: Tests
+        run: |
+          cargo test --verbose --no-default-features
+          cargo test ${{ matrix.test_all }} --verbose --features "${{ matrix.features }}"
+      # - name: Build benchmarks
+      #   if: ${{ matrix.bench }}
+      #   run: |
+      #     cargo bench --verbose --no-run --all-features
   
   rustfmt:
     runs-on: ubuntu-latest
