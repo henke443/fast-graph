@@ -47,24 +47,46 @@ pub struct CategorizedGraph<N, E> {
     pub categories: HashMap<String, NodeID>,
 }
 
-impl<N, E> GraphInterface<N, E> for CategorizedGraph<N, E> {
+impl<N, E> GraphInterface for CategorizedGraph<N, E> {
+    type NodeData = N;
+    type EdgeData = E;
+
+    fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
     fn remove_node(&mut self, id: NodeID) -> Result<(), GraphError> {
         let node = self
             .nodes
             .remove(id)
             .map_or(Err(GraphError::NodeNotFound), |n| Ok(n))?;
+
         for edge_id in node.connections.iter() {
-            self.edges
-                .remove(*edge_id)
-                .map_or(Err(GraphError::EdgeNotFound), |_| Ok(()))?;
+            self.remove_edge(*edge_id).or_else(|e| Ok(()))?;
         }
+
         Ok(())
     }
 
     fn remove_edge(&mut self, id: EdgeID) -> Result<(), GraphError> {
+        let edge = self.edge(id)?;
+        let from = edge.from;
+        let to = edge.to;
+    
+        if let Ok(node) = self.node_mut(from) {
+            node.connections.retain(|&x| x != id )
+        }
+
+        if let Ok(node) = self.node_mut(to) {
+            node.connections.retain(|&x| x != id )
+        }
+
         self.edges
             .remove(id)
             .map_or(Err(GraphError::EdgeNotFound), |_| Ok(()))?;
+    
+
+
         Ok(())
     }
 
@@ -148,7 +170,7 @@ pub enum CategorizedGraphError {
 }
 
 /// Methods for a graph with categories.
-pub trait Categorized<N, E, C>: GraphInterface<N, E> {
+pub trait Categorized<N, E, C>: GraphInterface<NodeData = N, EdgeData = E>{
     /// Returns the category ID by name. In the standard implementation this is a hashmap lookup.
     fn category_id_by_name(&self, category_name: &str) -> Option<&NodeID>;
 
@@ -268,7 +290,7 @@ pub trait Categorized<N, E, C>: GraphInterface<N, E> {
 
 impl<N, E> Categorized<N, E, N> for CategorizedGraph<N, E>
 where
-    Self: GraphInterface<N, E>,
+    Self: GraphInterface<NodeData = N, EdgeData = E>,
 {
     fn category_id_by_name(&self, category_name: &str) -> Option<&NodeID> {
         self.categories.get(category_name)
