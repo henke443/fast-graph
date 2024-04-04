@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         rust: [1.64.0, stable]
-        features: ["hashbrown", "categories"]
+        features: ["hashbrown", "categories", "serde", "specta"]
     steps:
       - uses: hecrj/setup-rust-action@v2
         with:
@@ -31,7 +31,6 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         rust: [1.64.0, stable]
     steps:
-      - name: Tests
       - uses: hecrj/setup-rust-action@v2
         with:
           rust-version: ${{ matrix.rust }}
