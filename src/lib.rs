@@ -153,13 +153,16 @@ use std::{
 pub use slotmap::SlotMap;
 use thiserror::Error;
 
+#[cfg(feature = "categories")]
 pub mod categories;
+#[cfg(feature = "categories")]
+pub use categories::*;
+
 pub mod edge;
 pub mod node;
 pub mod slotmap_graph;
 pub mod writer;
 
-pub use categories::*;
 pub use edge::*;
 pub use node::*;
 pub use writer::GraphWriter;

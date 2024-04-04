@@ -24,7 +24,7 @@ serde_json = {version = "1.0", optional = true}
 hashbrown = {version = "0.14.3", optional = true, features=["inline-more", "ahash"]}
 
 [features]
-default = ["hashbrown"]
+default = ["hashbrown", "categories"]
 serde = ["dep:serde", "dep:serde_json", "slotmap/serde"]
 specta = ["dep:specta", "dep:tauri-specta"]
 hashbrown = ["dep:hashbrown", "hashbrown/serde"]
