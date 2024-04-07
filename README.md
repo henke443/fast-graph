@@ -163,6 +163,6 @@ fast-graph
 [crates-badge]: https://img.shields.io/crates/v/fast-graph.svg
 [crates-url]: https://crates.io/crates/fast-graph
 [discord-badge]:  https://img.shields.io/discord/1225406740070404148?logo=discord&style=flat
-[discord-url]: https://discord.gg/n2tc79tJ4e
+[discord-url]: https://discord.gg/HFesdB4c
 [msrv-badge]: https://img.shields.io/badge/rustc-1.75+-blue.svg
 [RELEASES]: RELEASES.rst
