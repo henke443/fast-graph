@@ -137,7 +137,6 @@
 //! );
 //! ```
 
-use hashbrown::HashSet;
 #[cfg(feature = "specta")]
 pub use specta_derives::*;
 
