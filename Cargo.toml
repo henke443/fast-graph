@@ -5,7 +5,7 @@ documentation = "https://docs.rs/fast-graph"
 readme = "README.md"
 homepage = "https://github.com/henke443/fast-graph"
 repository = "https://github.com/henke443/fast-graph"
-version = "1.1.1"
+version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 categories = ["data-structures", "database", "mathematics", "science::geo", "visualization"]
@@ -29,6 +29,7 @@ serde = ["dep:serde", "dep:serde_json", "slotmap/serde"]
 specta = ["dep:specta", "dep:tauri-specta"]
 hashbrown = ["dep:hashbrown", "hashbrown/serde"]
 categories = []
+std = []
 
 
 

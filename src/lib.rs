@@ -137,6 +137,7 @@
 //! );
 //! ```
 
+use hashbrown::HashSet;
 #[cfg(feature = "specta")]
 pub use specta_derives::*;
 
@@ -214,6 +215,10 @@ impl<N, E> GraphInterface for Graph<N, E> {
     type NodeData = N;
     type EdgeData = E;
     
+    fn nodes(&self) -> impl Iterator<Item = NodeID> {
+        self.nodes.keys()
+    }
+
     fn node_count(&self) -> usize {
         self.nodes.len()
     }

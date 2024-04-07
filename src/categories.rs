@@ -33,9 +33,14 @@
 use crate::*;
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashMap;
+#[cfg(feature = "hashbrown")]
+use hashbrown::HashSet;
 
 #[cfg(not(feature = "hashbrown"))]
 use std::collections::HashMap;
+#[cfg(not(feature = "hashbrown"))]
+use std::collections::HashSet;
+
 use thiserror::Error;
 
 /// A graph with category nodes (where the nodes contain an ID of the category and a list of nodes in that category) and a hash map that maps category names to category nodes efficiently.
@@ -50,6 +55,10 @@ pub struct CategorizedGraph<N, E> {
 impl<N, E> GraphInterface for CategorizedGraph<N, E> {
     type NodeData = N;
     type EdgeData = E;
+
+    fn nodes(&self) -> impl Iterator<Item = NodeID> {
+        self.nodes.keys()
+    }
 
     fn node_count(&self) -> usize {
         self.nodes.len()

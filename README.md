@@ -8,12 +8,13 @@ fast-graph
 [![Rust CI](https://github.com/henke443/fast-graph/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/henke443/fast-graph/actions/workflows/rust-ci.yml)
 ![MSRV][msrv-badge]
 
+## Note
+ ⚠️ There will be some breaking changes in the coming 1-2 weeks at the very least until version 1.0.0 arrives.
 
- ## Lightweight & fast.
- ⚠️ Version 1.x.x is a bit misleading and there will be some breaking changes in the coming 1-2 weeks at the very least.
+## [Roadmap](ROADMAP.md)
 
+## Lightweight & fast.
  By default, [SlotMaps](https://docs.rs/slotmap/latest/slotmap/index.html) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
- [HashBrown](https://docs.rs/hashbrown/latest/hashbrown/index.html) is used instead of [`std::HashMap`] to map category names to ids in the [`CategorizedGraph`](https://docs.rs/fast-graph/latest/fast_graph/categories/struct.CategorizedGraph.html) struct.
 
  [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
  

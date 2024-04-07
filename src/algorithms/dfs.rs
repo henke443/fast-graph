@@ -1,5 +1,8 @@
 //! # Under development
+#[cfg(feature = "hashbrown")]
 use hashbrown::HashSet;
+#[cfg(not(feature = "hashbrown"))]
+use std::collections::HashSet;
 
 use crate::{
     Edge, Graph, GraphInterface, NodeID
@@ -7,6 +10,7 @@ use crate::{
 
 
 /// Under development
+#[derive(Clone)]
 pub struct DepthFirstSearch<'a, G: GraphInterface> {
     graph: &'a G,
     start: NodeID,
@@ -35,7 +39,6 @@ impl <'a, G: GraphInterface> Iterator for DepthFirstSearch<'a, G> {
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(node) = self.stack.pop() {
             if self.visited.contains(&node) {
-                println!("Cyclic graph detected, visited edges: {:#?}", self.visited_edges);
                 self.cyclic = true;
                 return self.next();
             }
@@ -61,23 +64,50 @@ impl <'a, G: GraphInterface> Iterator for DepthFirstSearch<'a, G> {
 
 impl<'a, G: GraphInterface> std::iter::FusedIterator for DepthFirstSearch<'a, G> {}
 
-impl<'a, G: GraphInterface> std::iter::ExactSizeIterator for DepthFirstSearch<'a, G> {
-    fn len(&self) -> usize {
-        self.graph.node_count() - self.visited.len()
-    }
-}
-
 /// Under development
 pub trait IterDepthFirst<'a, G: GraphInterface> {
+    /// Returns a *depth first search* iterator starting from a given node
     fn iter_depth_first(&'a self, start: NodeID) -> DepthFirstSearch<'a, G>;
+
+    /// Returns a vector of sets of node IDs, where each set is a connected component. \
+    /// Starts a DFS at every node (except if it's already been visited) and marks all reachable nodes as being part of the same component.
+    fn connected_components(&'a self) -> Vec<HashSet<NodeID>>;
 }
 
 impl<'a, G: GraphInterface> IterDepthFirst<'a, G> for G {
-    /// Under development
     fn iter_depth_first(&'a self, start: NodeID) -> DepthFirstSearch<'a, G> {
         DepthFirstSearch::new(self, start)
     }
+    
+    /// Returns a vector of sets of node IDs, where each set is a connected component. \
+    /// Starts a DFS at every node (except if it's already been visited) and marks all reachable nodes as being part of the same component.
+    fn connected_components(&'a self) -> Vec<HashSet<NodeID>> {
+        let mut visited = HashSet::new();
+        let mut components = Vec::new();
+        let mut current_component = 0usize;
+
+        // Starts a DFS at every node 
+        for node_id in self.nodes() {
+            // (except if it's already been visited) 
+            if visited.contains(&node_id) {
+                continue;
+            }
+            for node in self.iter_depth_first(node_id) {
+                visited.insert(node);
+                
+                // and marks all reachable nodes as being part of the same component.
+                if current_component >= components.len() {
+                    components.push(HashSet::new());
+                }
+                components[current_component].insert(node);
+            }
+            current_component += 1;
+        }
+
+        components
+    }
 }
+
 
 
 
@@ -99,16 +129,58 @@ mod tests {
         }
     }
 
+    macro_rules! get_graph {
+        ($graph:ident, $n:expr) => {
+            {
+                let mut nodes = Vec::new();
+                for i in 0..$n {
+                    nodes.push(NodeData::Int64(i));
+                }
+                let nodes = $graph.add_nodes(&nodes);
+                if nodes.len() != $n {
+                    panic!("Failed to add nodes");
+                }
+                nodes[..].try_into().unwrap()
+            }
+        };
+    }
+
     #[test]
-    fn test_dfs() {
+    fn test_dfs_connected_components() {
+        let mut graph: Graph<NodeData, ()> = Graph::new();
+        let [node0, node1, node2, node3, node4] = get_graph!(graph, 5);
+        
+        let mut components = graph.connected_components();
+        println!("Connected components 1 ({}): {:#?}", components.len(), components);
+        assert_eq!(components.len(), 5);
+        assert_eq!(components[0].len(), 1);
+    
+        graph.add_edges(&[
+            (node0, node1),
+            (node1, node0),
+        ]);
+    
+        components = graph.connected_components();
+        println!("Connected components 2 ({}): {:#?}", components.len(), components);
+        assert_eq!(components.len(), 4);
+        assert_eq!(components[0].len(), 2);
+    
+        graph.add_edges(&[
+            (node2, node3),
+            (node3, node4),
+        ]);
+    
+        components = graph.connected_components();
+        println!("Connected components 3 ({}): {:#?}", components.len(), components);
+    
+        assert_eq!(components.len(), 2);
+        assert_eq!(components[1].len(), 3);
+    }
+
+    #[test]
+    fn test_dfs_iter() {
         let mut graph1: Graph<NodeData, ()> = Graph::new();
-        let [node0, node1, node2, node3, node4] = graph1.add_nodes(&[
-            NodeData::Int64(0),
-            NodeData::Int64(1),
-            NodeData::Int64(2),
-            NodeData::Int64(3),
-            NodeData::Int64(4),
-        ])[..] else { panic!("Failed to add nodes") };
+        let [node0, node1, node2, node3, node4] = get_graph!(graph1, 5);
         
         
         graph1.add_edges(&[
@@ -120,17 +192,11 @@ mod tests {
             (node2, node0),
             (node2, node4),
             (node4, node2),
-        ]);
+        ]);    
 
 
         let mut graph2: Graph<NodeData, ()> = Graph::new();
-        let [node02, node12, node22, node32, node42] = graph2.add_nodes(&[
-            NodeData::Int64(0),
-            NodeData::Int64(1),
-            NodeData::Int64(2),
-            NodeData::Int64(3),
-            NodeData::Int64(4),
-        ])[..] else { panic!("Failed to add nodes") };
+        let [node02, node12, node22, node32, node42] = get_graph!(graph2, 5);
         
         graph2.add_edges(&[
             (node02, node32),
@@ -148,7 +214,7 @@ mod tests {
         let depth_first = graph1.iter_depth_first(node0);
         for node in  depth_first{
             let node = graph1.node(node).unwrap();
-            println!("{:?}", node.data);
+            //println!("{:?}", node.data);
             visited.push(node);
         }
 
@@ -162,7 +228,7 @@ mod tests {
         let mut visited = Vec::new();
         for node in graph1.iter_depth_first(node0) {
             let node = graph1.node(node).unwrap();
-            println!("{:?}", node.data);
+            //println!("{:?}", node.data);
             visited.push(node);
 
             if node.data == NodeData::Int64(4) {
@@ -178,7 +244,7 @@ mod tests {
         let mut visited2 = Vec::new();
         for node in graph2.iter_depth_first(node02) {
             let node = graph2.node(node).unwrap();
-            println!("{:?}", node.data);
+            //println!("{:?}", node.data);
             visited2.push(node);
 
             if node.data == NodeData::Int64(4) {

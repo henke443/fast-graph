@@ -1,6 +1,8 @@
 //! # Contains [GraphInterface]
 //! GraphInterface is a trait for basic "read and write" operations on a graph; core operations needed to change a graph and some derived helper functions.
 
+use hashbrown::HashSet;
+
 use crate::{Edge, EdgeID, GraphError, Node, NodeID};
 
 /// GraphInterface is a trait for basic "read and write" operations on a graph; core operations needed to change a graph and some derived helper functions.
@@ -8,7 +10,10 @@ pub trait GraphInterface {
     type NodeData;
     type EdgeData;
     
+
     fn node_count(&self) -> usize;
+
+    fn nodes(&self) -> impl Iterator<Item = NodeID>;
     
     fn node(&self, id: NodeID) -> Result<&Node<Self::NodeData>, GraphError>;
     fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<Self::NodeData>, GraphError>;
