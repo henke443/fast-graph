@@ -11,7 +11,25 @@ fast-graph
 ## Note
  ⚠️ There will be some breaking changes in the coming 1-2 weeks at the very least until version 1.0.0 arrives.
 
-## [Roadmap](ROADMAP.md)
+## Roadmap
+### General
+- [ ] No-std support 
+- [ ] Benchmarks 
+- [ ] Comparing benchmarks to alternatives 
+- [ ] Syntax improvements 
+- [ ] An undirected graph where the edges are just NodeIDs would make sense to skip the extra access for an edge. 
+
+### Algorithms
+- [ ] Topological sort 
+- [ ] Has path to root 
+- [x] Depth first walk
+    - [ ] post order
+- [ ] Cycle detection 
+- [ ] Breadth first 
+
+# Parallelization
+- [ ] Rayon support 
+
 
 ## Lightweight & fast.
 By default, [SlotMaps](https://docs.rs/slotmap/latest/slotmap/index.html) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times.
