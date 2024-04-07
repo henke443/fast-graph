@@ -19,9 +19,9 @@ fast-graph
 
 ### Algorithms
 - [ ] Topological sort 
-- [ ] Has path to root 
 - [x] Depth first walk
-- [ ] Cycle detection 
+    - [x] Connected components
+    - [ ] Find cycles 
 - [ ] Breadth first 
 
 ### Parallelization
