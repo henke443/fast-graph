@@ -16,14 +16,11 @@ fast-graph
 - [ ] No-std support 
 - [ ] Benchmarks 
 - [ ] Comparing benchmarks to alternatives 
-- [ ] Syntax improvements 
-- [ ] An undirected graph where the edges are just NodeIDs would make sense to skip the extra access for an edge. 
 
 ### Algorithms
 - [ ] Topological sort 
 - [ ] Has path to root 
 - [x] Depth first walk
-    - [ ] post order
 - [ ] Cycle detection 
 - [ ] Breadth first 
 
