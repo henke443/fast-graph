@@ -1,8 +1,6 @@
 //! # Contains [GraphInterface]
 //! GraphInterface is a trait for basic "read and write" operations on a graph; core operations needed to change a graph and some derived helper functions.
 
-use hashbrown::HashSet;
-
 use crate::{Edge, EdgeID, GraphError, Node, NodeID};
 
 /// GraphInterface is a trait for basic "read and write" operations on a graph; core operations needed to change a graph and some derived helper functions.
