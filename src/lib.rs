@@ -143,7 +143,6 @@ pub use specta_derives::*;
 use core::fmt;
 use std::fmt::Formatter;
 
-
 pub use slotmap::SlotMap;
 use thiserror::Error;
 
@@ -152,7 +151,6 @@ pub mod categories;
 
 #[cfg(feature = "categories")]
 pub use categories::*;
-
 
 pub mod algorithms;
 
@@ -213,7 +211,7 @@ pub struct Graph<N, E> {
 impl<N, E> GraphInterface for Graph<N, E> {
     type NodeData = N;
     type EdgeData = E;
-    
+
     fn nodes(&self) -> impl Iterator<Item = NodeID> {
         self.nodes.keys()
     }
@@ -221,7 +219,7 @@ impl<N, E> GraphInterface for Graph<N, E> {
     fn node_count(&self) -> usize {
         self.nodes.len()
     }
-    
+
     fn node(&self, id: NodeID) -> Result<&Node<N>, GraphError> {
         self.nodes.get(id).ok_or(GraphError::NodeNotFound)
     }

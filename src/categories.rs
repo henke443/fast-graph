@@ -81,20 +81,18 @@ impl<N, E> GraphInterface for CategorizedGraph<N, E> {
         let edge = self.edge(id)?;
         let from = edge.from;
         let to = edge.to;
-    
+
         if let Ok(node) = self.node_mut(from) {
-            node.connections.retain(|&x| x != id )
+            node.connections.retain(|&x| x != id)
         }
 
         if let Ok(node) = self.node_mut(to) {
-            node.connections.retain(|&x| x != id )
+            node.connections.retain(|&x| x != id)
         }
 
         self.edges
             .remove(id)
             .map_or(Err(GraphError::EdgeNotFound), |_| Ok(()))?;
-    
-
 
         Ok(())
     }
@@ -179,7 +177,7 @@ pub enum CategorizedGraphError {
 }
 
 /// Methods for a graph with categories.
-pub trait Categorized<N, E, C>: GraphInterface<NodeData = N, EdgeData = E>{
+pub trait Categorized<N, E, C>: GraphInterface<NodeData = N, EdgeData = E> {
     /// Returns the category ID by name. In the standard implementation this is a hashmap lookup.
     fn category_id_by_name(&self, category_name: &str) -> Option<&NodeID>;
 

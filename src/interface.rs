@@ -7,12 +7,11 @@ use crate::{Edge, EdgeID, GraphError, Node, NodeID};
 pub trait GraphInterface {
     type NodeData;
     type EdgeData;
-    
 
     fn node_count(&self) -> usize;
 
     fn nodes(&self) -> impl Iterator<Item = NodeID>;
-    
+
     fn node(&self, id: NodeID) -> Result<&Node<Self::NodeData>, GraphError>;
     fn node_mut(&mut self, id: NodeID) -> Result<&mut Node<Self::NodeData>, GraphError>;
 
@@ -53,7 +52,10 @@ pub trait GraphInterface {
         edges
     }
 
-    fn add_nodes_and_edges(&mut self, data: Vec<(Self::NodeData, Vec<NodeID>)>) -> (Vec<NodeID>, Vec<EdgeID>)
+    fn add_nodes_and_edges(
+        &mut self,
+        data: Vec<(Self::NodeData, Vec<NodeID>)>,
+    ) -> (Vec<NodeID>, Vec<EdgeID>)
     where
         Self::EdgeData: Default + Clone,
         Self::NodeData: Default + Clone,
@@ -63,7 +65,10 @@ pub trait GraphInterface {
             .map(|(data, edges)| {
                 (
                     data.clone(),
-                    edges.iter().map(|id| (*id, Self::EdgeData::default())).collect(),
+                    edges
+                        .iter()
+                        .map(|id| (*id, Self::EdgeData::default()))
+                        .collect(),
                 )
             })
             .collect();
