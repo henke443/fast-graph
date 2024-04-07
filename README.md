@@ -27,7 +27,7 @@ fast-graph
 - [ ] Cycle detection 
 - [ ] Breadth first 
 
-# Parallelization
+### Parallelization
 - [ ] Rayon support 
 
 
