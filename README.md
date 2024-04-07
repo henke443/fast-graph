@@ -14,43 +14,43 @@ fast-graph
 ## [Roadmap](ROADMAP.md)
 
 ## Lightweight & fast.
- By default, [SlotMaps](https://docs.rs/slotmap/latest/slotmap/index.html) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
+By default, [SlotMaps](https://docs.rs/slotmap/latest/slotmap/index.html) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times.
 
  [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
  
- ## Extensible & Generic
+## Extensible & Generic
 
- The [Graph] is generic over the node and edge data types. There's also traits for making even more customized graph-like data structures if the need arises.
+The [Graph] is generic over the node and edge data types. There's also traits for making even more customized graph-like data structures if the need arises.
 
- [`std::HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
+[`std::HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 
- ## Serde & Specta
+## Serde & Specta
 
- There's optional features to enable [serde] & [specta] support.
+There's optional features to enable [serde] & [specta] support.
 
- ## Categories
+## Categories
 
- The [CategorizedGraph] struct uses a hash map to map category names ([String](https://doc.rust-lang.org/std/string/index.html)) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
- There's also some useful extra functions to query categories and their nodes, and a [Categorized] trait that can be implemented for a custom struct if needed.
+The [CategorizedGraph] struct uses a hash map to map category names ([String](https://doc.rust-lang.org/std/string/index.html)) to a category node ([NodeID]) (where the node's edges are the nodes belonging to the category).
+There's also some useful extra functions to query categories and their nodes, and a [Categorized] trait that can be implemented for a custom struct if needed.
 
- In other words a simple extension to the graph that allows for efficient and easy grouping of nodes by strings.
+In other words a simple extension to the graph that allows for efficient and easy grouping of nodes by strings.
 
- # Structure
- [Node] - Struct representing a node in the graph. Contains a [NodeID] which is a key to the node in the slotmap, which has a generic data field and a list of edges.
+# Structure
+[Node] - Struct representing a node in the graph. Contains a [NodeID] which is a key to the node in the slotmap, which has a generic data field and a list of edges.
 
- [Edge] - Struct representing an edge in the graph. Contains an [EdgeID] which is a key to the edge in the slotmap, and two [NodeID]s which are the nodes the edge connects (from & to). An edge can also have "data", which could be anything or nothing; for example the weight of the connection or a struct or enum representing something else.
+[Edge] - Struct representing an edge in the graph. Contains an [EdgeID] which is a key to the edge in the slotmap, and two [NodeID]s which are the nodes the edge connects (from & to). An edge can also have "data", which could be anything or nothing; for example the weight of the connection or a struct or enum representing something else.
 
- [GraphInterface] - Trait defining methods to alter a graph, i.e. adding, removing, and editing nodes and edges.
+[GraphInterface] - Trait defining methods to alter a graph, i.e. adding, removing, and editing nodes and edges.
 
- [Graph] - The default graph struct which implements [GraphInterface]. It only contains two slotmaps, one for nodes and one for edges.
+[Graph] - The default graph struct which implements [GraphInterface]. It only contains two slotmaps, one for nodes and one for edges.
 
- [Categorized] - Trait that extends the [Graph] with category specific methods.
+[Categorized] - Trait that extends the [Graph] with category specific methods.
 
- [CategorizedGraph] - A graph with categories. Categories are normal nodes (which can contain edges & data), but the graph also contains a hashmap that maps category names to category nodes for easy access.
+[CategorizedGraph] - A graph with categories. Categories are normal nodes (which can contain edges & data), but the graph also contains a hashmap that maps category names to category nodes for easy access.
 
- # Examples
+# Examples
 
- ## Simple [Graph] and the ABA problem.
+## Simple [Graph] and the ABA problem.
 
  ```rs
  use fast_graph::{Graph, Node, Edge};

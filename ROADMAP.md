@@ -1,6 +1,3 @@
-
-
-
 # General
 - No-std support [ ]
 - Benchmarks [ ]

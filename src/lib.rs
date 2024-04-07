@@ -4,8 +4,7 @@
 //!
 //! ## Lightweight & fast.
 //!
-//! By default, [SlotMaps](`slotmap`) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times. Additionally, and optionally,
-//! [HashBrown](hashbrown) is used instead of [`std::HashMap`] to map category names to ids in the [`CategorizedGraph`] struct.
+//! By default, [SlotMaps](`slotmap`) are used to store the nodes and edges which solves the [ABA problem] while also providing O(1) insertion, deletion and lookup times.
 //!
 //! [ABA problem]: https://en.wikipedia.org/wiki/ABA_problem
 //!
