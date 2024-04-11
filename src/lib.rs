@@ -162,10 +162,6 @@ pub use edge::{Edge, EdgeID};
 pub use interface::GraphInterface;
 pub use node::{Node, NodeID};
 
-#[cfg(test)]
-#[path = "./tests.rs"]
-mod tests;
-
 /* -------------------------------------------------------------------------- */
 /*                 Simple very performant graph implementation                */
 /* -------------------------------------------------------------------------- */

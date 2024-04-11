@@ -4,11 +4,11 @@ extern crate serde;
 use slotmap::KeyData;
 use std::collections::HashMap;
 
-use crate::GraphInterface;
-use crate::NodeID;
+use fast_graph::GraphInterface;
+use fast_graph::NodeID;
 
-use crate::categories::*;
-use crate::Graph;
+use fast_graph::categories::*;
+use fast_graph::Graph;
 
 #[test]
 fn test_graph_basics() {
@@ -32,25 +32,6 @@ fn test_graph_basics() {
     #[derive(Clone, Debug)]
     #[cfg_attr(feature = "serde", derive(serde::Serialize))]
     struct EdgeData(&'static str);
-
-    impl Graph<NodeData, EdgeData> {
-        pub fn new_category_node(&mut self, category: &'static str, nodes: Vec<NodeID>) -> NodeID {
-            let category_node = CategoryNode { category, nodes };
-            let node = NodeData::CategoryNode(category_node);
-            let node = self.add_node(node);
-            node
-        }
-
-        pub fn all_categories(&self) -> Vec<&CategoryNode> {
-            self.nodes
-                .iter()
-                .filter_map(|node| match &node.1.data {
-                    NodeData::CategoryNode(category_node) => Some(category_node),
-                    _ => None,
-                })
-                .collect()
-        }
-    }
 
     let edge_data = EdgeData("Henrik");
 
