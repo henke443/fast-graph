@@ -75,66 +75,6 @@
 //!
 //! ```
 //!
-//! ## [CategorizedGraph] example
-//! ```
-//! use fast_graph::*;
-//!
-//! #[derive(Clone, Debug, Default, PartialEq)]
-//! #[cfg_attr(feature = "serde", derive(serde::Serialize))]
-//! enum NodeData {
-//!     Number(u32),
-//!     CategoryData(String),
-//!     #[default]
-//!     None,
-//! }
-//!
-//! let mut graph: CategorizedGraph<NodeData, ()> = CategorizedGraph::new();
-//!
-//! let node1 = graph.add_node(NodeData::Number(1));
-//! let node2 = graph.add_node(NodeData::Number(2));
-//! let node3 = graph.add_node(NodeData::Number(3));
-//!
-//! let category1 = graph.create_category("Category 1", vec![node1, node2],
-//!     NodeData::CategoryData("Category 1".into())
-//! ).unwrap();
-//!
-//! assert_eq!(graph.category("Category 1").unwrap().connections.len(), 2);
-//!
-//! // The category node should have the same data as the one we passed in.
-//! let category1_data = graph.category("Category 1").unwrap().data.clone();
-//! if let NodeData::CategoryData(category1_name) = category1_data {
-//!    assert_eq!(category1_name, "Category 1".to_string());
-//! }
-//!
-//! // Adding to a category that doesn't exist will create it.
-//! let category2 = graph.add_to_category("Category 2", vec![node2]);
-//! assert_eq!(graph.all_categories().len(), 2);
-//!
-//! // Adding to the same category twice will return the same category node.
-//! let category2_1 = graph.add_to_category("Category 2", vec![node3]);
-//! assert_eq!(graph.all_categories().len(), 2);
-//! assert_eq!(category2, category2_1);
-//!
-//! // The "Category 2" node should have two connections, one to node2 and one to node3.
-//! let category2_node = graph.category("Category 2").unwrap();
-//! assert_eq!(
-//! // this:
-//!     category2_node.connections.iter()
-//!         .map(|edge_id|
-//!             graph.edge(*edge_id).unwrap().to
-//!         )
-//!         .collect::<Vec<NodeID>>(),
-//! // should equal:
-//!     vec![node2, node3]
-//! );
-//!
-//! // Creating a category twice will error.
-//! assert!(
-//!     graph.create_category("Category 1",
-//!         vec![node3], NodeData::CategoryData("Category 1".into())
-//!     ).is_err()
-//! );
-//! ```
 
 #[cfg(feature = "specta")]
 pub use specta_derives::*;
@@ -157,6 +97,9 @@ mod edge;
 mod interface;
 mod node;
 mod specta_derives;
+mod doublylinkedlist;
+
+pub use doublylinkedlist::DoublyLinkedList;
 
 pub use edge::{Edge, EdgeID};
 pub use interface::GraphInterface;

@@ -30,12 +30,8 @@ impl EdgeID {
 ///
 /// Contains an [EdgeID] which is a key to the edge in the slotmap, and two [NodeID]s which are the nodes the edge connects (from & to).
 /// An edge can also have “data”, which could be anything or nothing; for example the weight of the connection or a struct or enum representing something else.
-///
-/// ## Why is there no "EdgeTrait"?
-///
-/// The [Edge] struct is very simple and doesn't need a trait. It's just a struct with an ID, two node IDs, and some data.
-/// If you want to add more functionality or data to the edge you can probably just add it to the data field, or add an edge as a field to your custom type.
-#[derive(Clone)]
+
+#[derive(Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "specta", derive(specta::Type))]
 pub struct Edge<T> {
@@ -44,6 +40,14 @@ pub struct Edge<T> {
     pub to: NodeID,
     pub data: T,
 }
+
+pub trait EdgeTrait<T> {
+    fn id(&self) -> EdgeID;
+    fn from(&self) -> NodeID;
+    fn to(&self) -> NodeID;
+    fn data(&self) -> T;
+}
+
 
 /// Implements Hash for Edge<T> so only the ID is used for hashing.
 impl<T: std::hash::Hash> std::hash::Hash for Edge<T> {

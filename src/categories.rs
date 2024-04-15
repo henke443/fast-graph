@@ -296,8 +296,6 @@ pub trait Categorized<N, E, C>: GraphInterface<NodeData = N, EdgeData = E> {
 }
 
 impl<N, E> Categorized<N, E, N> for CategorizedGraph<N, E>
-where
-    Self: GraphInterface<NodeData = N, EdgeData = E>,
 {
     fn category_id_by_name(&self, category_name: &str) -> Option<&NodeID> {
         self.categories.get(category_name)

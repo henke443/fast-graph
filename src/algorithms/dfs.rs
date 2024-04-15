@@ -1,65 +1,81 @@
-//! # Under development
 #[cfg(feature = "hashbrown")]
 use hashbrown::HashSet;
 #[cfg(not(feature = "hashbrown"))]
 use std::collections::HashSet;
 
-use crate::{Edge, Graph, GraphInterface, NodeID};
+
+
+use crate::{GraphInterface, NodeID};
+use crate::Edge;
 
 /// Under development
 #[derive(Clone)]
 pub struct DepthFirstSearch<'a, G: GraphInterface> {
     graph: &'a G,
-    start: NodeID,
     visited: HashSet<NodeID>,
     stack: Vec<NodeID>,
     cyclic: bool,
-    visited_edges: Vec<(NodeID, NodeID)>,
 }
 
 impl<'a, G: GraphInterface> DepthFirstSearch<'a, G> {
     pub fn new(graph: &'a G, start: NodeID) -> Self {
         Self {
             graph,
-            start,
             visited: HashSet::new(),
             stack: vec![start],
             cyclic: false,
-            visited_edges: Vec::new(),
         }
     }
 }
+
 
 impl<'a, G: GraphInterface> Iterator for DepthFirstSearch<'a, G> {
     type Item = NodeID;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(node) = self.stack.pop() {
-            if self.visited.contains(&node) {
-                self.cyclic = true;
-                return self.next();
-            }
-            self.visited.insert(node);
-
-            let node = self.graph.node(node).unwrap();
-            for edge in &node.connections {
-                let edge = self.graph.edge(*edge).unwrap();
-                if (edge.to != self.start) && !self.visited.contains(&edge.to) {
-                    self.stack.push(edge.to);
-                    self.visited_edges.push((edge.from, edge.to));
+        while let Some(node_id) = self.stack.pop() {
+            if !self.visited.contains(&node_id) {
+                self.visited.insert(node_id);
+                let node = self.graph.node(node_id).unwrap();
+                let connections = &node.connections;
+                for edge_id in connections.iter().rev() {
+                    let to_id = self.graph.edge(*edge_id).unwrap().to;
+                    if !self.visited.contains(&to_id) {
+                        self.stack.push(to_id);
+                    }
                 }
-                // else if (edge.from != self.start) && !self.visited.contains(&edge.from){
-                //     self.stack.push(edge.from)
-                // }
+                return Some(node_id);
+            } else {
+                self.cyclic = true;
             }
-
-            return Some(node.id);
         }
         None
+        // if let Some(node) = self.stack.pop() {
+        //     if self.visited.contains(&node) {
+        //         self.cyclic = true;
+        //         return self.next();
+        //     }
+        //     self.visited.insert(node);
+
+        //     let node = self.graph.node(node);
+        //     if node.is_err() {
+        //         return self.next();
+        //     }
+        //     let node = node.unwrap();
+        //     for edge in node.connections.iter().rev() {
+        //         let edge = self.graph.edge(*edge).unwrap();
+        //         if !self.visited.contains(&edge.to) {
+        //             self.stack.push(edge.to);
+        //         }
+        //     }
+
+        //     return Some(node.id);
+        // }
+        // None
     }
 }
 
-impl<'a, G: GraphInterface> std::iter::FusedIterator for DepthFirstSearch<'a, G> {}
+// impl<'a, G: GraphInterface> std::iter::FusedIterator for DepthFirstSearch<'a, G> {}
 
 /// Under development
 pub trait IterDepthFirst<'a, G: GraphInterface> {
@@ -108,7 +124,7 @@ impl<'a, G: GraphInterface> IterDepthFirst<'a, G> for G {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::GraphInterface;
+    use crate::Graph;
 
     #[derive(Clone, Debug)]
     enum NodeData {
@@ -191,26 +207,20 @@ mod tests {
         ]);
 
         let mut graph2: Graph<NodeData, ()> = Graph::new();
-        let [node02, node12, node22, node32, node42] = get_graph!(graph2, 5);
+        let [node0_1, node1_1, node2_1, node3_1, node4_1] = get_graph!(graph2, 5);
 
         graph2.add_edges(&[
-            (node02, node32),
-            (node02, node22),
-            (node12, node02),
-            (node22, node32),
-            (node42, node22),
+            (node0_1, node3_1),
+            (node0_1, node2_1),
+            (node1_1, node0_1),
+            (node2_1, node3_1),
+            (node4_1, node2_1),
         ]);
 
-        println!(
-            "Depth First Search 1 (node count: {}):",
-            graph1.node_count()
-        );
-        println!("Edges: {:#?}", graph1.edges.len());
         let mut visited = Vec::new();
         let depth_first = graph1.iter_depth_first(node0);
         for node in depth_first {
             let node = graph1.node(node).unwrap();
-            //println!("{:?}", node.data);
             visited.push(node);
         }
 
@@ -234,8 +244,8 @@ mod tests {
             }
         }
 
-        assert_ne!(visited.len(), graph1.node_count());
-        assert_eq!(visited.len(), 3);
+        assert_eq!(visited.len(), graph1.node_count());
+        assert_eq!(visited.len(), 5);
 
         println!(
             "Depth First Search 3 (node count: {}):",
@@ -243,7 +253,7 @@ mod tests {
         );
         println!("Edges: {:#?}", graph2.edges.len());
         let mut visited2 = Vec::new();
-        for node in graph2.iter_depth_first(node02) {
+        for node in graph2.iter_depth_first(node0_1) {
             let node = graph2.node(node).unwrap();
             //println!("{:?}", node.data);
             visited2.push(node);
@@ -253,6 +263,6 @@ mod tests {
             }
         }
 
-        assert_eq!(visited.len(), visited2.len());
+        assert_ne!(visited.len(), visited2.len());
     }
 }
