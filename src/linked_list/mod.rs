@@ -1,5 +1,5 @@
+mod basic_linked_list;
 mod linked_list;
-mod linked_slotmap;
 
-pub use linked_list::LinkedList as BasicLinkedList;
-pub use linked_slotmap::LinkedSlotMap as LinkedList;
+pub use basic_linked_list::LinkedList as BasicLinkedList;
+pub use linked_list::LinkedList;

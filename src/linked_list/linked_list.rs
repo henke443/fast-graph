@@ -1,19 +1,27 @@
 use core::fmt;
+use std::{marker::PhantomData, ptr::NonNull};
+
+use hashbrown::HashMap;
+use slotmap::{new_key_type, KeyData, SlotMap};
+
+new_key_type! {
+    pub struct LinkedListIndex;
+}
 
 #[derive(Debug)]
 pub struct LinkedListItem<T: fmt::Debug> {
-    pub index: usize,
+    pub index: LinkedListIndex,
     pub value: T,
-    pub next_index: Option<usize>,
-    pub prev_index: Option<usize>,
+    pub next_index: Option<LinkedListIndex>,
+    pub prev_index: Option<LinkedListIndex>,
+}
+/// A doubly linked list using SlotMap for better cache performance than a linked list using pointers and which also solves the ABA problem.
+pub struct LinkedList<T: fmt::Debug> {
+    pub head: Option<LinkedListIndex>,
+    pub tail: Option<LinkedListIndex>,
+    pub items: SlotMap<LinkedListIndex, LinkedListItem<T>>,
 }
 
-/// A doubly linked list using indexes into a vector instead of pointers for better cache locality than a linked list using pointers and which also solves the ABA problem.
-pub struct LinkedList<T: fmt::Debug> {
-    pub head: Option<usize>,
-    pub tail: Option<usize>,
-    pub items: Vec<LinkedListItem<T>>
-}
 
 impl<T: fmt::Debug> LinkedList<T> {
     /// Create a new empty list.
@@ -21,33 +29,33 @@ impl<T: fmt::Debug> LinkedList<T> {
         Self {
             head: None,
             tail: None,
-            items: Vec::new(),
+            items: SlotMap::with_key(),
         }
     }
 
     /// Get an item in the list.
-    pub fn get(&self, index: usize) -> Option<&LinkedListItem<T>> {
+    pub fn get(&self, index: LinkedListIndex) -> Option<&LinkedListItem<T>> {
         self.items.get(index).map(|item| item)
     }
 
     /// Get a mutable reference to an item in the list.
-    pub fn get_mut(& mut self, index: usize) -> Option<&mut LinkedListItem<T>> {
+    pub fn get_mut(& mut self, index: LinkedListIndex) -> Option<&mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         item
     }
 
     /// Get the item after the item with the given index if it exists.
-    pub fn next_of(&self, index: usize) -> Option<& LinkedListItem<T>> {
+    pub fn next_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.next_index.and_then(|next| self.items.get(next)))
     }
 
     /// Get the item before the item with the given index if it exists.
-    pub fn prev_of(&self, index: usize) -> Option<& LinkedListItem<T>> {
+    pub fn prev_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.prev_index.and_then(|prev| self.items.get(prev)))
     }
 
     /// Get a mutable reference to the item after the item with the given index if it exists.
-    pub fn next_of_mut(&mut self, index: usize) -> Option<& mut LinkedListItem<T>> {
+    pub fn next_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let next = item.and_then(|item| item.prev_index);
         if let Some(next) = next {
@@ -58,7 +66,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Get a mutable reference to the item before the item with the given index if it exists.
-    pub fn prev_of_mut(&mut self, index: usize) -> Option<& mut LinkedListItem<T>> {
+    pub fn prev_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let prev = item.and_then(|item| item.prev_index);
         if let Some(prev) = prev {
@@ -69,13 +77,11 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Insert an item after the given index and return the index of the new item.
-    pub fn insert_after(&mut self, index: usize, value: T) -> usize {
+    pub fn insert_after(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let next_index = self.items.get(index).unwrap().next_index;
 
-        let new_index = self.items.len();
-
-        self.items.push(LinkedListItem {
-            index: new_index,
+        let new_index = self.items.insert_with_key(|i| LinkedListItem {
+            index: i,
             value,
             next_index: next_index,
             prev_index: Some(index),
@@ -101,12 +107,11 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Insert an item before the given index.
-    pub fn insert_before(&mut self, index: usize, value: T) -> usize {
+    pub fn insert_before(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let prev_index = self.items.get(index).unwrap().prev_index;
 
-        let new_index = self.items.len();
-        self.items.push(LinkedListItem {
-            index: new_index,
+        let new_index = self.items.insert_with_key(|i| LinkedListItem {
+            index: i,
             value,
             next_index: Some(index),
             prev_index: prev_index,
@@ -132,10 +137,9 @@ impl<T: fmt::Debug> LinkedList<T> {
 
 
     /// Add an item to the back of the list and return its index.
-    pub fn push_back(&mut self, value: T) -> usize {
-        let index = self.items.len();
-        self.items.push(LinkedListItem {
-            index,
+    pub fn push_back(&mut self, value: T) -> LinkedListIndex {
+        let index = self.items.insert_with_key(|i| LinkedListItem {
+            index: i,
             value,
             next_index: None,
             prev_index: self.tail,
@@ -157,10 +161,9 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Push an item to the front of the list.
-    pub fn push_front(&mut self, value: T) -> usize {
-        let index = self.items.len();
-        self.items.push(LinkedListItem {
-            index,
+    pub fn push_front(&mut self, value: T) -> LinkedListIndex {
+        let index = self.items.insert_with_key(|i| LinkedListItem {
+            index: i,
             value,
             next_index: self.head,
             prev_index: None,
@@ -183,7 +186,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Remove the last item in the list and return it (if it exists)
     pub fn pop_back(&mut self) -> Option<T> {
         self.tail.and_then(|old_tail| {
-            let old_tail = self.items.remove(old_tail);
+            let old_tail = self.items.remove(old_tail).unwrap();
 
             self.tail = old_tail.prev_index;
 
@@ -203,7 +206,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Remove the first item in the list and return it (if it exists)
     pub fn pop_front(&mut self) -> Option<T> {
         self.head.map(|old_head| {
-            let old_head = self.items.remove(old_head);
+            let old_head = self.items.remove(old_head).unwrap();
             self.head = old_head.next_index;
 
             match old_head.next_index {
@@ -220,30 +223,30 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
 
-    pub fn iter_next(&self, start: usize) -> impl Iterator<Item = &LinkedListItem<T>> {
+    pub fn iter_next(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
         self.iter_next_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_prev(&self, start: usize) -> impl Iterator<Item = &LinkedListItem<T>> {
+    pub fn iter_prev(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
         self.iter_prev_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_next_index(&self, start: usize) -> impl Iterator<Item = usize> + '_ {
+    pub fn iter_next_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_ {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.next_index))
     }
 
-    pub fn iter_prev_index(&self, start: usize) -> impl Iterator<Item = usize> + '_  {
+    pub fn iter_prev_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_  {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.prev_index))
     }
 
 
-    /*
+    /* // TODO
      Splits the list into two at the given index. Returns everything after the given index, including the index.
      This operation should compute in O(n) time.
      */
-    // pub fn split_off(&mut self, index: usize) -> Self where T: Clone {
+    // pub fn split_off(&mut self, index: LinkedListIndex) -> Self where T: Clone {
     //     let mut new_list = Self::new();
         
     //     let mut current = index;
@@ -270,7 +273,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Push many items to the back of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn extend<I>(&mut self, values: I) -> Vec<usize> where
+    pub fn extend<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
         I: IntoIterator<Item = T>,
     {
         let mut indexes = Vec::new();
@@ -283,7 +286,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Push many items to the front of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn extend_front<I>(&mut self, values: I) -> Vec<usize> where
+    pub fn extend_front<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
         I: IntoIterator<Item = T>,
     {
         let mut indexes = Vec::new();
@@ -300,8 +303,8 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Remove an item from the list.
-    pub fn remove(&mut self, index: usize) -> T {
-        let item = self.items.remove(index);
+    pub fn remove(&mut self, index: LinkedListIndex) -> T {
+        let item = self.items.remove(index).unwrap();
 
         if let Some(prev) = item.prev_index {
             self.items.get_mut(prev).unwrap().next_index = item.next_index;
@@ -362,7 +365,6 @@ mod tests {
         let b = list.push_back(2);
         let c = list.push_back(3);
 
-
         assert!(list.prev_of(a).is_none());
         assert_eq!(list.get(a).unwrap().value, 1);
         assert_eq!(list.next_of(a).unwrap().value, 2);
@@ -374,7 +376,6 @@ mod tests {
         assert_eq!(list.prev_of(c).unwrap().value, 2);
         assert_eq!(list.get(c).unwrap().value, 3);
         assert!(list.next_of(c).is_none());
-        
     }
 
     #[test]
@@ -408,7 +409,7 @@ mod tests {
     #[test]
     fn test_iter() {
         let mut list = LinkedList::new();
-        let verticies: Vec<usize> = (0..100).map(|i| {
+        let verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
             list.push_back(format!("Node: {}", i.to_string()))
         }).collect();
         
@@ -424,7 +425,7 @@ mod tests {
     #[test]
     fn test_popback() {
         let mut list = LinkedList::new();
-        let _verticies: Vec<usize> = (0..100).map(|i| {
+        let _verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
             list.push_back(format!("Node: {}", i.to_string()))
         }).collect();
 
@@ -438,6 +439,7 @@ mod tests {
                 let last = list.tail.unwrap();
                 assert_eq!(list.get(last).unwrap().value, expected);
             } 
+            
         }
     }
 
