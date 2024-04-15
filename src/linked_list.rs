@@ -45,6 +45,7 @@ impl<'a, T: fmt::Debug> IterNextMut<'a, T> {
 
 
 impl<T: fmt::Debug> LinkedList<T> {
+    /// Create a new empty list.
     pub fn new() -> Self {
         Self {
             head: None,
@@ -53,23 +54,28 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
     }
 
+    /// Get an item in the list.
     pub fn get(&self, index: LinkedListIndex) -> Option<&LinkedListItem<T>> {
         self.items.get(index).map(|item| item)
     }
 
+    /// Get a mutable reference to an item in the list.
     pub fn get_mut(& mut self, index: LinkedListIndex) -> Option<&mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         item
     }
 
+    /// Get the item after the item with the given index if it exists.
     pub fn next_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.next_index.and_then(|next| self.items.get(next)))
     }
 
+    /// Get the item before the item with the given index if it exists.
     pub fn prev_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.prev_index.and_then(|prev| self.items.get(prev)))
     }
 
+    /// Get a mutable reference to the item after the item with the given index if it exists.
     pub fn next_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let next = item.and_then(|item| item.prev_index);
@@ -80,6 +86,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
     }
 
+    /// Get a mutable reference to the item before the item with the given index if it exists.
     pub fn prev_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let prev = item.and_then(|item| item.prev_index);
@@ -90,6 +97,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
     }
 
+    /// Insert an item after the given index and return the index of the new item.
     pub fn insert_after(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let next_index = self.items.get(index).unwrap().next_index;
 
@@ -119,6 +127,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         new_index
     }
 
+    /// Insert an item before the given index.
     pub fn insert_before(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let prev_index = self.items.get(index).unwrap().prev_index;
 
@@ -148,6 +157,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
 
+    /// Add an item to the back of the list and return its index.
     pub fn push_back(&mut self, value: T) -> LinkedListIndex {
         let index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
@@ -171,6 +181,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         index
     }
 
+    /// Push an item to the front of the list.
     pub fn push_front(&mut self, value: T) -> LinkedListIndex {
         let index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
@@ -193,6 +204,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         index
     }
 
+    /// Remove the last item in the list and return it (if it exists)
     pub fn pop_back(&mut self) -> Option<T> {
         self.tail.and_then(|old_tail| {
             let old_tail = self.items.remove(old_tail).unwrap();
@@ -212,6 +224,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         })
     }
 
+    /// Remove the first item in the list and return it (if it exists)
     pub fn pop_front(&mut self) -> Option<T> {
         self.head.map(|old_head| {
             let old_head = self.items.remove(old_head).unwrap();
@@ -249,6 +262,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.prev_index))
     }
 
+    /// Get an iterator that allows mutating the list while iterating.
     pub fn iter_next_mut(&mut self, start: LinkedListIndex) -> IterNextMut<T> {
         let iter = IterNextMut {
             list: self,
@@ -313,14 +327,17 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Push many items to the front of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn push_front_many(&mut self, values: Vec<T>) -> Vec<LinkedListIndex> {
-        let mut indexes = Vec::with_capacity(values.len());
+    pub fn extend_front<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
+        I: IntoIterator<Item = T>,
+    {
+        let mut indexes = Vec::new();
         for value in values {
             indexes.push(self.push_front(value));
         }
         indexes
     }
 
+    /// Get the number of items in the list.
     pub fn len(&self) -> usize {
         self.items.len()
     }
