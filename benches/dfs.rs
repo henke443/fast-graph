@@ -1,5 +1,5 @@
-use criterion::{criterion_group, criterion_main, measurement::Measurement, Bencher, Criterion};
-use fast_graph::{Graph, NodeID, GraphInterface, algorithms::IterDepthFirst};
+use criterion::{criterion_group, criterion_main, Criterion};
+use fast_graph::{Graph, GraphInterface, algorithms::IterDepthFirst};
 
 use graphlib;
 use petgraph;

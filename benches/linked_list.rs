@@ -1,9 +1,6 @@
-use criterion::{criterion_group, criterion_main, measurement::Measurement, Bencher, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use std::collections::LinkedList as StdLinkedList;
-use fast_graph::{LinkedList as FastLinkedList};
-
-use graphlib;
-
+use fast_graph::LinkedList as FastLinkedList;
 
 macro_rules! fast_linked_list_simple_fn {
     ($g: tt, $str: tt,$x: expr, $fn:tt$(($arg:ident))+ ) => {

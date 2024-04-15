@@ -1,5 +1,5 @@
 use core::fmt;
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ptr::NonNull};
 
 use hashbrown::HashMap;
 use slotmap::{new_key_type, KeyData, SlotMap};
@@ -26,6 +26,7 @@ struct IterNextMut<'a, T: fmt::Debug> {
     pub list: &'a mut LinkedList<T>,
     pub current: Option<LinkedListIndex>,
 }
+
 
 impl<'a, T: fmt::Debug> IterNextMut<'a, T> {
     fn next(&mut self) -> Option<& mut LinkedListItem<T>> {
@@ -262,54 +263,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.prev_index))
     }
 
-    /// Get an iterator that allows mutating the list while iterating.
-    pub fn iter_next_mut(&mut self, start: LinkedListIndex) -> IterNextMut<T> {
-        let iter = IterNextMut {
-            list: self,
-            current: Some(start),
-        };
-        iter
-    }
 
-    /// Extend this list with another list, adding the new items to the back of this list.
-    /// 
-    /// The other list will be empty after this operation.
-    /// 
-    /// Returns the indexes of the new items in this list, which will not be the same as the indexes in the source list.
-    pub fn extend_back(&mut self, other: &mut Self) -> Vec<LinkedListIndex> {
-        if let Some(tail) = self.tail {
-            if let Some(head) = other.head {
-                self.items.get_mut(tail).unwrap().next_index = Some(head);
-                other.items.get_mut(head).unwrap().prev_index = Some(tail);
-            }
-        } else {
-            self.head = other.head;
-        }
-
-        self.tail = other.tail;
-
-        let mut new_indexes = Vec::new();
-        let mut index_mapping = HashMap::new();
-        let mut other_items = other.items.drain();
-        let first_item = other_items.next().unwrap();
-        let first_item_index = self.push_back(first_item.1.value);
-        for (index, item) in other_items {
-            let new_index = self.push_back(item.value);
-            index_mapping.insert(index, new_index);
-        }
-        
-        let mut current_item = first_item_index;
-        
-        while let Some(next_item) = self.next_of(current_item) {
-            let next_index = index_mapping[&next_item.index];
-            self.get_mut(current_item).unwrap().next_index = Some(next_index);
-            self.get_mut(next_index).unwrap().prev_index = Some(current_item);
-            new_indexes.push(current_item);
-            current_item = next_index;
-        }
-
-        new_indexes
-    }
 
     /// Push many items to the back of the list.
     /// 
@@ -336,6 +290,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
         indexes
     }
+    
 
     /// Get the number of items in the list.
     pub fn len(&self) -> usize {
@@ -362,6 +317,34 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
 
         item.value
+    }
+
+    pub fn retain_mut<F>(&mut self, mut f: F) where
+        F: FnMut(&T) -> bool,
+    {
+        let mut current = self.head;
+        while let Some(index) = current {
+            let item = self.items.get(index).unwrap();
+            let next = item.next_index;
+            if !f(&item.value) {
+                self.remove(index);
+            }
+            current = next;
+        }
+    }
+
+
+    pub fn retain<F>(&self, mut f: F) -> Self where
+        F: FnMut(&T) -> bool,
+        T: Clone,
+        LinkedListItem<T>: Clone
+    {
+        let mut new_list = Self::new();
+        new_list.items = self.items.clone();
+        new_list.head = self.head;
+        new_list.tail = self.tail;
+        new_list.retain_mut(f);
+        new_list
     }
 }
 
