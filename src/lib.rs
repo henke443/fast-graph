@@ -100,6 +100,7 @@ mod specta_derives;
 mod linked_list;
 
 pub use linked_list::LinkedList;
+pub use linked_list::BasicLinkedList;
 
 pub use edge::{Edge, EdgeID};
 pub use interface::GraphInterface;

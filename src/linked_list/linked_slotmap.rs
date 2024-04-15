@@ -5,47 +5,25 @@ use hashbrown::HashMap;
 use slotmap::{new_key_type, KeyData, SlotMap};
 
 new_key_type! {
-    pub struct LinkedListIndex;
+    pub struct LinkedSlotMapIndex;
 }
 
 #[derive(Debug)]
-pub struct LinkedListItem<T: fmt::Debug> {
-    pub index: LinkedListIndex,
+pub struct LinkedSlotMapItem<T: fmt::Debug> {
+    pub index: LinkedSlotMapIndex,
     pub value: T,
-    pub next_index: Option<LinkedListIndex>,
-    pub prev_index: Option<LinkedListIndex>,
+    pub next_index: Option<LinkedSlotMapIndex>,
+    pub prev_index: Option<LinkedSlotMapIndex>,
 }
 /// A doubly linked list using SlotMap for better cache performance than a linked list using pointers and which also solves the ABA problem.
-pub struct LinkedList<T: fmt::Debug> {
-    pub head: Option<LinkedListIndex>,
-    pub tail: Option<LinkedListIndex>,
-    pub items: SlotMap<LinkedListIndex, LinkedListItem<T>>,
-}
-
-struct IterNextMut<'a, T: fmt::Debug> {
-    pub list: &'a mut LinkedList<T>,
-    pub current: Option<LinkedListIndex>,
+pub struct LinkedSlotMap<T: fmt::Debug> {
+    pub head: Option<LinkedSlotMapIndex>,
+    pub tail: Option<LinkedSlotMapIndex>,
+    pub items: SlotMap<LinkedSlotMapIndex, LinkedSlotMapItem<T>>,
 }
 
 
-impl<'a, T: fmt::Debug> IterNextMut<'a, T> {
-    fn next(&mut self) -> Option<& mut LinkedListItem<T>> {
-        let current = self.current?;
-        let item = self.list.get(current);
-        if let Some(item) = item {
-            self.current = item.next_index
-        }
-
-        if let Some(current) = self.current {
-            self.list.get_mut(current)
-        } else {
-            None
-        }
-    }
-}
-
-
-impl<T: fmt::Debug> LinkedList<T> {
+impl<T: fmt::Debug> LinkedSlotMap<T> {
     /// Create a new empty list.
     pub fn new() -> Self {
         Self {
@@ -56,28 +34,28 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Get an item in the list.
-    pub fn get(&self, index: LinkedListIndex) -> Option<&LinkedListItem<T>> {
+    pub fn get(&self, index: LinkedSlotMapIndex) -> Option<&LinkedSlotMapItem<T>> {
         self.items.get(index).map(|item| item)
     }
 
     /// Get a mutable reference to an item in the list.
-    pub fn get_mut(& mut self, index: LinkedListIndex) -> Option<&mut LinkedListItem<T>> {
+    pub fn get_mut(& mut self, index: LinkedSlotMapIndex) -> Option<&mut LinkedSlotMapItem<T>> {
         let item = self.items.get_mut(index);
         item
     }
 
     /// Get the item after the item with the given index if it exists.
-    pub fn next_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
+    pub fn next_of(&self, index: LinkedSlotMapIndex) -> Option<& LinkedSlotMapItem<T>> {
         self.items.get(index).and_then(|item| item.next_index.and_then(|next| self.items.get(next)))
     }
 
     /// Get the item before the item with the given index if it exists.
-    pub fn prev_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
+    pub fn prev_of(&self, index: LinkedSlotMapIndex) -> Option<& LinkedSlotMapItem<T>> {
         self.items.get(index).and_then(|item| item.prev_index.and_then(|prev| self.items.get(prev)))
     }
 
     /// Get a mutable reference to the item after the item with the given index if it exists.
-    pub fn next_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
+    pub fn next_of_mut(&mut self, index: LinkedSlotMapIndex) -> Option<& mut LinkedSlotMapItem<T>> {
         let item = self.items.get_mut(index);
         let next = item.and_then(|item| item.prev_index);
         if let Some(next) = next {
@@ -88,7 +66,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Get a mutable reference to the item before the item with the given index if it exists.
-    pub fn prev_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
+    pub fn prev_of_mut(&mut self, index: LinkedSlotMapIndex) -> Option<& mut LinkedSlotMapItem<T>> {
         let item = self.items.get_mut(index);
         let prev = item.and_then(|item| item.prev_index);
         if let Some(prev) = prev {
@@ -99,10 +77,10 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Insert an item after the given index and return the index of the new item.
-    pub fn insert_after(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
+    pub fn insert_after(&mut self, index: LinkedSlotMapIndex, value: T) -> LinkedSlotMapIndex {
         let next_index = self.items.get(index).unwrap().next_index;
 
-        let new_index = self.items.insert_with_key(|i| LinkedListItem {
+        let new_index = self.items.insert_with_key(|i| LinkedSlotMapItem {
             index: i,
             value,
             next_index: next_index,
@@ -129,10 +107,10 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Insert an item before the given index.
-    pub fn insert_before(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
+    pub fn insert_before(&mut self, index: LinkedSlotMapIndex, value: T) -> LinkedSlotMapIndex {
         let prev_index = self.items.get(index).unwrap().prev_index;
 
-        let new_index = self.items.insert_with_key(|i| LinkedListItem {
+        let new_index = self.items.insert_with_key(|i| LinkedSlotMapItem {
             index: i,
             value,
             next_index: Some(index),
@@ -159,8 +137,8 @@ impl<T: fmt::Debug> LinkedList<T> {
 
 
     /// Add an item to the back of the list and return its index.
-    pub fn push_back(&mut self, value: T) -> LinkedListIndex {
-        let index = self.items.insert_with_key(|i| LinkedListItem {
+    pub fn push_back(&mut self, value: T) -> LinkedSlotMapIndex {
+        let index = self.items.insert_with_key(|i| LinkedSlotMapItem {
             index: i,
             value,
             next_index: None,
@@ -183,8 +161,8 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Push an item to the front of the list.
-    pub fn push_front(&mut self, value: T) -> LinkedListIndex {
-        let index = self.items.insert_with_key(|i| LinkedListItem {
+    pub fn push_front(&mut self, value: T) -> LinkedSlotMapIndex {
+        let index = self.items.insert_with_key(|i| LinkedSlotMapItem {
             index: i,
             value,
             next_index: self.head,
@@ -245,30 +223,57 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
 
-    pub fn iter_next(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
+    pub fn iter_next(&self, start: LinkedSlotMapIndex) -> impl Iterator<Item = &LinkedSlotMapItem<T>> {
         self.iter_next_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_prev(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
+    pub fn iter_prev(&self, start: LinkedSlotMapIndex) -> impl Iterator<Item = &LinkedSlotMapItem<T>> {
         self.iter_prev_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_next_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_ {
+    pub fn iter_next_index(&self, start: LinkedSlotMapIndex) -> impl Iterator<Item = LinkedSlotMapIndex> + '_ {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.next_index))
     }
 
-    pub fn iter_prev_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_  {
+    pub fn iter_prev_index(&self, start: LinkedSlotMapIndex) -> impl Iterator<Item = LinkedSlotMapIndex> + '_  {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.prev_index))
     }
 
 
+    /* // TODO
+     Splits the list into two at the given index. Returns everything after the given index, including the index.
+     This operation should compute in O(n) time.
+     */
+    // pub fn split_off(&mut self, index: LinkedSlotMapIndex) -> Self where T: Clone {
+    //     let mut new_list = Self::new();
+        
+    //     let mut current = index;
+    //     while let Some(next) = self.next_of(current).map(|item| item.index) {
+    //         let item = self.items.remove(current).unwrap();
+    //         new_list.items.insert_with_key(|i| LinkedSlotMapItem {
+    //             index: i,
+    //             value: item.value.clone(),
+    //             next_index: None,
+    //             prev_index: new_list.tail,
+    //         });
+    //         current = next;
+    //     }
+
+    //     if let Some(prev) = self.prev_of(index).map(|item| item.index) {
+    //         self.items.get_mut(prev).unwrap().next_index = None;
+    //     } else {
+    //         self.head = None;
+    //     }
+
+    //     new_list
+    // }
 
     /// Push many items to the back of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn extend<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
+    pub fn extend<I>(&mut self, values: I) -> Vec<LinkedSlotMapIndex> where
         I: IntoIterator<Item = T>,
     {
         let mut indexes = Vec::new();
@@ -281,7 +286,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     /// Push many items to the front of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn extend_front<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
+    pub fn extend_front<I>(&mut self, values: I) -> Vec<LinkedSlotMapIndex> where
         I: IntoIterator<Item = T>,
     {
         let mut indexes = Vec::new();
@@ -290,7 +295,7 @@ impl<T: fmt::Debug> LinkedList<T> {
         }
         indexes
     }
-    
+
 
     /// Get the number of items in the list.
     pub fn len(&self) -> usize {
@@ -298,7 +303,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     }
 
     /// Remove an item from the list.
-    pub fn remove(&mut self, index: LinkedListIndex) -> T {
+    pub fn remove(&mut self, index: LinkedSlotMapIndex) -> T {
         let item = self.items.remove(index).unwrap();
 
         if let Some(prev) = item.prev_index {
@@ -337,7 +342,7 @@ impl<T: fmt::Debug> LinkedList<T> {
     pub fn retain<F>(&self, mut f: F) -> Self where
         F: FnMut(&T) -> bool,
         T: Clone,
-        LinkedListItem<T>: Clone
+        LinkedSlotMapItem<T>: Clone
     {
         let mut new_list = Self::new();
         new_list.items = self.items.clone();
@@ -355,11 +360,10 @@ mod tests {
 
     #[test]
     fn test_fn_push_back_fn_next_of_fn_prev_of() {
-        let mut list = LinkedList::new();
+        let mut list = LinkedSlotMap::new();
         let a = list.push_back(1);
         let b = list.push_back(2);
         let c = list.push_back(3);
-
 
         assert!(list.prev_of(a).is_none());
         assert_eq!(list.get(a).unwrap().value, 1);
@@ -372,13 +376,12 @@ mod tests {
         assert_eq!(list.prev_of(c).unwrap().value, 2);
         assert_eq!(list.get(c).unwrap().value, 3);
         assert!(list.next_of(c).is_none());
-        
     }
 
     #[test]
     fn test_fn_insert_after_fn_insert_before() {
         // a -> b -> c
-        let mut list = LinkedList::new();
+        let mut list = LinkedSlotMap::new();
 
         let (a,b,c,d) = {
 
@@ -405,8 +408,8 @@ mod tests {
     
     #[test]
     fn test_iter() {
-        let mut list = LinkedList::new();
-        let verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
+        let mut list = LinkedSlotMap::new();
+        let verticies: Vec<LinkedSlotMapIndex> = (0..100).map(|i| {
             list.push_back(format!("Node: {}", i.to_string()))
         }).collect();
         
@@ -421,8 +424,8 @@ mod tests {
 
     #[test]
     fn test_popback() {
-        let mut list = LinkedList::new();
-        let verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
+        let mut list = LinkedSlotMap::new();
+        let _verticies: Vec<LinkedSlotMapIndex> = (0..100).map(|i| {
             list.push_back(format!("Node: {}", i.to_string()))
         }).collect();
 
@@ -430,7 +433,7 @@ mod tests {
         while let Some(popped) = list.pop_back() {            
             i -= 1;
 
-            println!("Popped: {:?}", popped);
+            //println!("Popped: {:?}", popped);
             let expected = format!("Node: {}", (i).to_string());
             if i >= 0 {
                 let last = list.tail.unwrap();
