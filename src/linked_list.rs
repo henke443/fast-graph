@@ -1,51 +1,34 @@
+use core::fmt;
 use std::marker::PhantomData;
 
 use hashbrown::HashMap;
 use slotmap::{new_key_type, KeyData, SlotMap};
 
 new_key_type! {
-    pub struct DoublyLinkedListIndex;
+    pub struct LinkedListIndex;
 }
 
-pub struct DoublyLinkedListItem<T> {
-    pub index: DoublyLinkedListIndex,
+#[derive(Debug)]
+pub struct LinkedListItem<T: fmt::Debug> {
+    pub index: LinkedListIndex,
     pub value: T,
-    pub next_index: Option<DoublyLinkedListIndex>,
-    pub prev_index: Option<DoublyLinkedListIndex>,
+    pub next_index: Option<LinkedListIndex>,
+    pub prev_index: Option<LinkedListIndex>,
 }
-
-// impl<'d, T> DoublyLinkedListItem<'d, T> {
-//     pub fn prev(&'d self) -> Option<&'d Self> {
-//         self.prev_index.and_then(|index| self.list.get(index))
-//     }
-
-//     pub fn next(&'d self) -> Option<&'d Self> {
-//         self.next_index.and_then(|index| self.list.get(index))
-//     }
-
-//     pub fn prev_mut(&'d self) -> Option<&'d mut Self> {
-//         self.prev_index.and_then(|index| self.list.get_mut(index))
-//     }
-
-//     pub fn next_mut(&'d self) -> Option<&'d mut Self> {
-//         self.next_index.and_then(|index| self.list.get_mut(index))
-//     }
-// }
-
 /// A doubly linked list using SlotMap for better cache performance than a linked list using pointers and which also solves the ABA problem.
-pub struct DoublyLinkedList<T> {
-    pub head: Option<DoublyLinkedListIndex>,
-    pub tail: Option<DoublyLinkedListIndex>,
-    pub items: slotmap::SlotMap<DoublyLinkedListIndex, DoublyLinkedListItem<T>>,
+pub struct LinkedList<T: fmt::Debug> {
+    pub head: Option<LinkedListIndex>,
+    pub tail: Option<LinkedListIndex>,
+    pub items: SlotMap<LinkedListIndex, LinkedListItem<T>>,
 }
 
-struct IterNextMut<'a, T> {
-    list: &'a mut DoublyLinkedList<T>,
-    current: Option<DoublyLinkedListIndex>,
+struct IterNextMut<'a, T: fmt::Debug> {
+    pub list: &'a mut LinkedList<T>,
+    pub current: Option<LinkedListIndex>,
 }
 
-impl<'a, T> IterNextMut<'a, T> {
-    fn next(&mut self) -> Option<& mut DoublyLinkedListItem<T>> {
+impl<'a, T: fmt::Debug> IterNextMut<'a, T> {
+    fn next(&mut self) -> Option<& mut LinkedListItem<T>> {
         let current = self.current?;
         let item = self.list.get(current);
         if let Some(item) = item {
@@ -60,51 +43,34 @@ impl<'a, T> IterNextMut<'a, T> {
     }
 }
 
-struct IterPrevMut<'a, T> {
-    list_ref: &'a mut SlotMap<DoublyLinkedListIndex, DoublyLinkedListItem<T>>,
-    current: Option<DoublyLinkedListIndex>,
-}
 
-impl<'a, T> Iterator for IterPrevMut<'a, T> {
-    type Item = DoublyLinkedListIndex;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let current = self.current?;
-        let item = self.list_ref.get_mut(current);
-        self.current = item.unwrap().prev_index;
-        item.and_then(|item| Some(item.index))
-    }
-}
-
-
-
-impl<T> DoublyLinkedList<T> {
+impl<T: fmt::Debug> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             head: None,
             tail: None,
-            items: slotmap::SlotMap::with_key(),
+            items: SlotMap::with_key(),
         }
     }
 
-    pub fn get(&self, index: DoublyLinkedListIndex) -> Option<&DoublyLinkedListItem<T>> {
+    pub fn get(&self, index: LinkedListIndex) -> Option<&LinkedListItem<T>> {
         self.items.get(index).map(|item| item)
     }
 
-    pub fn get_mut(& mut self, index: DoublyLinkedListIndex) -> Option<& mut DoublyLinkedListItem<T>> {
-        let mut item = self.items.get_mut(index);
+    pub fn get_mut(& mut self, index: LinkedListIndex) -> Option<&mut LinkedListItem<T>> {
+        let item = self.items.get_mut(index);
         item
     }
 
-    pub fn next_of(&self, index: DoublyLinkedListIndex) -> Option<& DoublyLinkedListItem<T>> {
+    pub fn next_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.next_index.and_then(|next| self.items.get(next)))
     }
 
-    pub fn prev_of(&self, index: DoublyLinkedListIndex) -> Option<& DoublyLinkedListItem<T>> {
+    pub fn prev_of(&self, index: LinkedListIndex) -> Option<& LinkedListItem<T>> {
         self.items.get(index).and_then(|item| item.prev_index.and_then(|prev| self.items.get(prev)))
     }
 
-    pub fn next_of_mut(&mut self, index: DoublyLinkedListIndex) -> Option<& mut DoublyLinkedListItem<T>> {
+    pub fn next_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let next = item.and_then(|item| item.prev_index);
         if let Some(next) = next {
@@ -114,7 +80,7 @@ impl<T> DoublyLinkedList<T> {
         }
     }
 
-    pub fn prev_of_mut(&mut self, index: DoublyLinkedListIndex) -> Option<& mut DoublyLinkedListItem<T>> {
+    pub fn prev_of_mut(&mut self, index: LinkedListIndex) -> Option<& mut LinkedListItem<T>> {
         let item = self.items.get_mut(index);
         let prev = item.and_then(|item| item.prev_index);
         if let Some(prev) = prev {
@@ -124,10 +90,10 @@ impl<T> DoublyLinkedList<T> {
         }
     }
 
-    pub fn insert_after(&mut self, index: DoublyLinkedListIndex, value: T) -> & DoublyLinkedListItem<T> {
+    pub fn insert_after(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let next_index = self.items.get(index).unwrap().next_index;
 
-        let new_index = self.items.insert_with_key(|i| DoublyLinkedListItem {
+        let new_index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
             value,
             next_index: next_index,
@@ -150,13 +116,13 @@ impl<T> DoublyLinkedList<T> {
         item.next_index = Some(new_index);
 
         // Return the new element
-        self.items.get_mut(new_index).unwrap()
+        new_index
     }
 
-    pub fn insert_before(&mut self, index: DoublyLinkedListIndex, value: T) -> &DoublyLinkedListItem<T> {
+    pub fn insert_before(&mut self, index: LinkedListIndex, value: T) -> LinkedListIndex {
         let prev_index = self.items.get(index).unwrap().prev_index;
 
-        let new_index = self.items.insert_with_key(|i| DoublyLinkedListItem {
+        let new_index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
             value,
             next_index: Some(index),
@@ -178,11 +144,12 @@ impl<T> DoublyLinkedList<T> {
         // Update the element we insert before to point its `prev` to the new element.
         item.prev_index = Some(new_index);
 
-        self.items.get_mut(new_index).unwrap()
+        new_index
     }
 
-    pub fn push_back(&mut self, value: T) -> DoublyLinkedListIndex {
-        let index = self.items.insert_with_key(|i| DoublyLinkedListItem {
+
+    pub fn push_back(&mut self, value: T) -> LinkedListIndex {
+        let index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
             value,
             next_index: None,
@@ -204,8 +171,8 @@ impl<T> DoublyLinkedList<T> {
         index
     }
 
-    pub fn push_front(&mut self, value: T) -> DoublyLinkedListIndex {
-        let index = self.items.insert_with_key(|i| DoublyLinkedListItem {
+    pub fn push_front(&mut self, value: T) -> LinkedListIndex {
+        let index = self.items.insert_with_key(|i| LinkedListItem {
             index: i,
             value,
             next_index: self.head,
@@ -227,8 +194,9 @@ impl<T> DoublyLinkedList<T> {
     }
 
     pub fn pop_back(&mut self) -> Option<T> {
-        self.tail.map(|old_tail| {
+        self.tail.and_then(|old_tail| {
             let old_tail = self.items.remove(old_tail).unwrap();
+
             self.tail = old_tail.prev_index;
 
             match old_tail.prev_index {
@@ -240,7 +208,7 @@ impl<T> DoublyLinkedList<T> {
                 }
             }
 
-            old_tail.value
+            Some(old_tail.value)
         })
     }
 
@@ -263,30 +231,29 @@ impl<T> DoublyLinkedList<T> {
     }
 
 
-    pub fn iter_next(&self, start: DoublyLinkedListIndex) -> impl Iterator<Item = &DoublyLinkedListItem<T>> {
+    pub fn iter_next(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
         self.iter_next_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_prev(&self, start: DoublyLinkedListIndex) -> impl Iterator<Item = &DoublyLinkedListItem<T>> {
+    pub fn iter_prev(&self, start: LinkedListIndex) -> impl Iterator<Item = &LinkedListItem<T>> {
         self.iter_prev_index(start).map(move |index| self.items.get(index).unwrap())
     }
 
-    pub fn iter_next_index(&self, start: DoublyLinkedListIndex) -> impl Iterator<Item = DoublyLinkedListIndex> + '_ {
+    pub fn iter_next_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_ {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.next_index))
     }
 
-    pub fn iter_prev_index(&self, start: DoublyLinkedListIndex) -> impl Iterator<Item = DoublyLinkedListIndex> + '_  {
+    pub fn iter_prev_index(&self, start: LinkedListIndex) -> impl Iterator<Item = LinkedListIndex> + '_  {
         let items = &self.items;
         std::iter::successors(Some(start), move |index| items.get(*index).and_then(move |item| item.prev_index))
     }
 
-    pub fn iter_next_mut(&mut self, start: DoublyLinkedListIndex) -> IterNextMut<T> {
+    pub fn iter_next_mut(&mut self, start: LinkedListIndex) -> IterNextMut<T> {
         let iter = IterNextMut {
             list: self,
             current: Some(start),
         };
-
         iter
     }
 
@@ -295,7 +262,7 @@ impl<T> DoublyLinkedList<T> {
     /// The other list will be empty after this operation.
     /// 
     /// Returns the indexes of the new items in this list, which will not be the same as the indexes in the source list.
-    pub fn extend_back(&mut self, other: &mut Self) -> Vec<DoublyLinkedListIndex> {
+    pub fn extend_back(&mut self, other: &mut Self) -> Vec<LinkedListIndex> {
         if let Some(tail) = self.tail {
             if let Some(head) = other.head {
                 self.items.get_mut(tail).unwrap().next_index = Some(head);
@@ -319,6 +286,13 @@ impl<T> DoublyLinkedList<T> {
         
         let mut current_item = first_item_index;
         
+        while let Some(next_item) = self.next_of(current_item) {
+            let next_index = index_mapping[&next_item.index];
+            self.get_mut(current_item).unwrap().next_index = Some(next_index);
+            self.get_mut(next_index).unwrap().prev_index = Some(current_item);
+            new_indexes.push(current_item);
+            current_item = next_index;
+        }
 
         new_indexes
     }
@@ -326,8 +300,10 @@ impl<T> DoublyLinkedList<T> {
     /// Push many items to the back of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn push_back_many(&mut self, values: Vec<T>) -> Vec<DoublyLinkedListIndex> {
-        let mut indexes = Vec::with_capacity(values.len());
+    pub fn extend<I>(&mut self, values: I) -> Vec<LinkedListIndex> where
+        I: IntoIterator<Item = T>,
+    {
+        let mut indexes = Vec::new();
         for value in values {
             indexes.push(self.push_back(value));
         }
@@ -337,7 +313,7 @@ impl<T> DoublyLinkedList<T> {
     /// Push many items to the front of the list.
     /// 
     /// Returns the indexes of the new items
-    pub fn push_front_many(&mut self, values: Vec<T>) -> Vec<DoublyLinkedListIndex> {
+    pub fn push_front_many(&mut self, values: Vec<T>) -> Vec<LinkedListIndex> {
         let mut indexes = Vec::with_capacity(values.len());
         for value in values {
             indexes.push(self.push_front(value));
@@ -345,8 +321,12 @@ impl<T> DoublyLinkedList<T> {
         indexes
     }
 
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
     /// Remove an item from the list.
-    pub fn remove(&mut self, index: DoublyLinkedListIndex) -> T {
+    pub fn remove(&mut self, index: LinkedListIndex) -> T {
         let item = self.items.remove(index).unwrap();
 
         if let Some(prev) = item.prev_index {
@@ -375,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_fn_push_back_fn_next_of_fn_prev_of() {
-        let mut list = DoublyLinkedList::new();
+        let mut list = LinkedList::new();
         let a = list.push_back(1);
         let b = list.push_back(2);
         let c = list.push_back(3);
@@ -392,50 +372,72 @@ mod tests {
         assert_eq!(list.prev_of(c).unwrap().value, 2);
         assert_eq!(list.get(c).unwrap().value, 3);
         assert!(list.next_of(c).is_none());
-
-
-        // A bit paranoid test but let's see so the indexes in the items are correct also
-        let a1 = list.get(a).unwrap();
-        let b1 = list.get(b).unwrap();
-        let c1 = list.get(c).unwrap();
-        
-        assert!(list.prev_of(a1.index).is_none());
-        assert_eq!(a1.value, 1);
-        assert_eq!(list.next_of(a1.index).unwrap().value, 2);
-
-        assert_eq!(list.prev_of(b1.index).unwrap().value, 1);
-        assert_eq!(b1.value, 2);
-        assert_eq!(list.next_of(b1.index).unwrap().value, 3);
-
-        assert_eq!(list.prev_of(c1.index).unwrap().value, 2);
-        assert_eq!(c1.value, 3);
-        assert!(list.next_of(c1.index).is_none());
         
     }
 
     #[test]
     fn test_fn_insert_after_fn_insert_before() {
         // a -> b -> c
-        let mut list = DoublyLinkedList::new();
-        let mut list_items = &mut list.items;
+        let mut list = LinkedList::new();
 
         let (a,b,c,d) = {
+
             let a = list.push_back(1);
             let b = list.push_back(2);
             let c = list.push_back(3);
-    
+            let d = list.insert_after(a.clone(), 4);
+
             // a -> d -> b -> c
-            let d = { list.insert_after(a, 4) };
             (a,b,c,d)
         };
+
         
         let prev_b = list.prev_of(b).unwrap();
-        let next_d = list.next_of(d.index).unwrap();
+        let next_d = list.next_of(d).unwrap();
+        let next_a = list.next_of(a).unwrap();
         
+        assert!(list.prev_of(a).is_none());
         assert_eq!(prev_b.value, 4);
         assert_eq!(next_d.value, 2);
+        assert_eq!(next_a.value, 4);
     }
 
     
+    #[test]
+    fn test_iter() {
+        let mut list = LinkedList::new();
+        let verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
+            list.push_back(format!("Node: {}", i.to_string()))
+        }).collect();
+        
+        for n in list.iter_next(verticies[0]) {
+            println!("Value: \"{}\"", n.value);
+        }
+
+        for n in list.iter_next(verticies[0]) {
+            println!("Value: \"{}\"", n.value);
+        }
+    }
+
+    #[test]
+    fn test_popback() {
+        let mut list = LinkedList::new();
+        let verticies: Vec<LinkedListIndex> = (0..100).map(|i| {
+            list.push_back(format!("Node: {}", i.to_string()))
+        }).collect();
+
+        let mut i = 99;
+        while let Some(popped) = list.pop_back() {            
+            i -= 1;
+
+            println!("Popped: {:?}", popped);
+            let expected = format!("Node: {}", (i).to_string());
+            if i >= 0 {
+                let last = list.tail.unwrap();
+                assert_eq!(list.get(last).unwrap().value, expected);
+            } 
+            
+        }
+    }
 
 }

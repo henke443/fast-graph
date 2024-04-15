@@ -97,9 +97,9 @@ mod edge;
 mod interface;
 mod node;
 mod specta_derives;
-mod doublylinkedlist;
+mod linked_list;
 
-pub use doublylinkedlist::DoublyLinkedList;
+pub use linked_list::LinkedList;
 
 pub use edge::{Edge, EdgeID};
 pub use interface::GraphInterface;

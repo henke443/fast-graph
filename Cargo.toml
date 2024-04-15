@@ -17,7 +17,9 @@ keywords = ["graph", "ecs", "slotmap", "category", "database"]
 name = "dfs"
 harness = false
 
-
+[[bench]]
+name = "linked_list"
+harness = false
 
 [dependencies]
 # wrapper_derive = { version = "0.1.0", path = "../wrapper_derive" }
