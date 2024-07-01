@@ -136,9 +136,6 @@
 //! );
 //! ```
 
-#[cfg(feature = "specta")]
-pub use specta_derives::*;
-
 use core::fmt;
 use std::fmt::Formatter;
 
@@ -156,6 +153,7 @@ pub mod algorithms;
 mod edge;
 mod interface;
 mod node;
+#[cfg(feature = "specta")]
 mod specta_derives;
 
 pub use edge::{Edge, EdgeID};
